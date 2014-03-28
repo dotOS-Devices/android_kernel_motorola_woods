@@ -976,8 +976,11 @@ rndis_old_unbind(struct usb_configuration *c, struct usb_function *f)
 {
 	struct f_rndis	*rndis = func_to_rndis(f);
 
+<<<<<<< HEAD
 	F_RNDIS_DBG("\n");
 
+=======
+>>>>>>> d5571f2... usb: gadget: fix build
 	rndis_deregister(rndis->config);
 
 	usb_free_all_descriptors(f);
@@ -1036,8 +1039,11 @@ rndis_bind_config_vendor(struct usb_configuration *c, u8 ethaddr[ETH_ALEN],
 	if (status)
 		kfree(rndis);
 fail:
+<<<<<<< HEAD
 
 	F_RNDIS_DBG("done, status %d\n", status);
+=======
+>>>>>>> d5571f2... usb: gadget: fix build
 	return status;
 }
 

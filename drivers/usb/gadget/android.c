@@ -50,7 +50,6 @@
 =======
 #include "f_fs.c"
 #include "f_audio_source.c"
-#include "f_mass_storage.c"
 #include "f_mtp.c"
 >>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 #include "f_accessory.c"
@@ -62,6 +61,7 @@
 #include "rndis.c"
 #include "u_ether.c"
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 #include "mbim_ether.c"
 #include "f_mbim.c"
@@ -76,6 +76,10 @@ USB_ETHERNET_MODULE_PARAMETERS();
 
 =======
 >>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
+=======
+USB_ETHERNET_MODULE_PARAMETERS();
+
+>>>>>>> d5571f2... usb: gadget: fix build
 MODULE_AUTHOR("Mike Lockwood");
 MODULE_DESCRIPTION("Android Composite USB Driver");
 MODULE_LICENSE("GPL");
@@ -345,16 +349,19 @@ static struct android_usb_function hid_function = {
 =======
 >>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 
-struct functionfs_config {
+struct ffs_function_config {
 	bool opened;
 	bool enabled;
 	struct usb_function *func;
 	struct usb_function_instance *fi;
 	struct ffs_data *data;
+	struct usb_function_instance *fi_ffs;
+	struct usb_function *f_ffs;
 };
 
 static int functionfs_ready_callback(struct ffs_data *ffs);
 static void functionfs_closed_callback(struct ffs_data *ffs);
+<<<<<<< HEAD
 
 static int ffs_function_init(struct android_usb_function *f,
 			     struct usb_composite_dev *cdev)
@@ -363,8 +370,46 @@ static int ffs_function_init(struct android_usb_function *f,
 	struct f_fs_opts *opts;
 	f->config = kzalloc(sizeof(struct functionfs_config), GFP_KERNEL);
 	if (!f->config)
-		return -ENOMEM;
+=======
+static int ffs_function_init(struct android_usb_function *f,
+			     struct usb_composite_dev *cdev)
+{
+	struct f_fs_opts *opts;
+	struct ffs_function_config *config;
+	int ret = 0;
 
+	config = kzalloc(sizeof(struct ffs_function_config), GFP_KERNEL);
+	if (!config)
+>>>>>>> d5571f2... usb: gadget: fix build
+		return -ENOMEM;
+	f->config = config;
+
+	config->fi_ffs = usb_get_function_instance("ffs");
+	if (IS_ERR(config->fi_ffs)) {
+		return PTR_ERR(config->fi_ffs);
+	}
+	opts = to_f_fs_opts(config->fi_ffs);
+	/* only adb is using FunctionFS now */
+	ret = ffs_single_dev(opts->dev);
+	if (ret)
+		goto err_put_func_inst;
+	opts->dev->ffs_ready_callback = functionfs_ready_callback;
+	opts->dev->ffs_closed_callback = functionfs_closed_callback;
+	opts->no_configfs = true;
+
+	config->f_ffs = usb_get_function(config->fi_ffs);
+	if (IS_ERR(config->f_ffs)) {
+		ret = PTR_ERR(config->f_ffs);
+		goto err_put_func_inst;
+	}
+	return 0;
+
+err_put_func_inst:
+	usb_put_function_instance(config->fi_ffs);
+	return ret;
+
+
+<<<<<<< HEAD
 	config = f->config;
 	config->fi = usb_get_function_instance("ffs");
 	if (IS_ERR(config->fi))
@@ -376,22 +421,31 @@ static int ffs_function_init(struct android_usb_function *f,
 	opts->no_configfs = true;
 
 	return ffs_single_dev(opts->dev);
+=======
+>>>>>>> d5571f2... usb: gadget: fix build
 }
 
 static void ffs_function_cleanup(struct android_usb_function *f)
 {
+<<<<<<< HEAD
 	struct functionfs_config *config = f->config;
 
 	if (config)
 		usb_put_function_instance(config->fi);
 
+=======
+	struct ffs_function_config *config = f->config;
+	usb_put_function(config->f_ffs);
+	usb_put_function_instance(config->fi_ffs);
+>>>>>>> d5571f2... usb: gadget: fix build
 	kfree(f->config);
+	f->config = NULL;
 }
 
 static void ffs_function_enable(struct android_usb_function *f)
 {
 	struct android_dev *dev = _android_dev;
-	struct functionfs_config *config = f->config;
+	struct ffs_function_config *config = f->config;
 
 	config->enabled = true;
 
@@ -403,7 +457,7 @@ static void ffs_function_enable(struct android_usb_function *f)
 static void ffs_function_disable(struct android_usb_function *f)
 {
 	struct android_dev *dev = _android_dev;
-	struct functionfs_config *config = f->config;
+	struct ffs_function_config *config = f->config;
 
 	config->enabled = false;
 
@@ -412,9 +466,11 @@ static void ffs_function_disable(struct android_usb_function *f)
 		android_enable(dev);
 }
 
+
 static int ffs_function_bind_config(struct android_usb_function *f,
 				    struct usb_configuration *c)
 {
+<<<<<<< HEAD
 	struct functionfs_config *config = f->config;
 	int ret;
 
@@ -432,7 +488,18 @@ static int ffs_function_bind_config(struct android_usb_function *f,
 	}
 
 	return ret;
+=======
+	struct ffs_function_config *config = f->config;
+	int ret = 0;
+	ret = usb_add_function(c, config->f_ffs);
+	if (ret) {
+		pr_err("Could not add ffs function %d\n", ret);
+		return ret;
+	}
+	return 0;
+>>>>>>> d5571f2... usb: gadget: fix build
 }
+
 
 static ssize_t
 ffs_aliases_show(struct device *pdev, struct device_attribute *attr, char *buf)
@@ -489,8 +556,7 @@ static struct android_usb_function ffs_function = {
 static int functionfs_ready_callback(struct ffs_data *ffs)
 {
 	struct android_dev *dev = _android_dev;
-	struct functionfs_config *config = ffs_function.config;
-	int ret = 0;
+	struct ffs_function_config *config = ffs_function.config;
 
 	mutex_lock(&dev->mutex);
 
@@ -501,13 +567,13 @@ static int functionfs_ready_callback(struct ffs_data *ffs)
 		android_enable(dev);
 
 	mutex_unlock(&dev->mutex);
-	return ret;
+	return 0;
 }
 
 static void functionfs_closed_callback(struct ffs_data *ffs)
 {
 	struct android_dev *dev = _android_dev;
-	struct functionfs_config *config = ffs_function.config;
+	struct ffs_function_config *config = ffs_function.config;
 
 	mutex_lock(&dev->mutex);
 
@@ -517,6 +583,7 @@ static void functionfs_closed_callback(struct ffs_data *ffs)
 	config->opened = false;
 	config->data = NULL;
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 	if (config->func) {
 		usb_put_function(config->func);
@@ -540,6 +607,11 @@ static void *functionfs_acquire_dev_callback(const char *dev_name)
 static void functionfs_release_dev_callback(struct ffs_data *ffs_data)
 {
 }
+=======
+	mutex_unlock(&dev->mutex);
+}
+
+>>>>>>> d5571f2... usb: gadget: fix build
 
 >>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 #define MAX_ACM_INSTANCES 4
@@ -1305,6 +1377,7 @@ static struct android_usb_function rndis_function = {
 };
 
 
+<<<<<<< HEAD
 struct mbim_function_config {
 	u8      ethaddr[ETH_ALEN];
 	char	manufacturer[256];
@@ -1373,6 +1446,14 @@ static struct android_usb_function mbim_function = {
 struct mass_storage_function_config {
 	struct usb_function *f_ms;
 	struct usb_function_instance *f_ms_inst;
+=======
+#define MAX_MS_INSTANCES 1
+struct mass_storage_function_config {
+	int instances;
+	int instances_on;
+	struct usb_function *f_ms[MAX_MS_INSTANCES];
+	struct usb_function_instance *f_ms_inst[MAX_MS_INSTANCES];
+>>>>>>> d5571f2... usb: gadget: fix build
 };
 #define fsg_num_buffers	CONFIG_USB_GADGET_STORAGE_NUM_BUFFERS
 static struct fsg_module_parameters fsg_mod_data;
@@ -1383,6 +1464,7 @@ static int mass_storage_function_init(struct android_usb_function *f,
 {
 	struct mass_storage_function_config *config;
 <<<<<<< HEAD
+<<<<<<< HEAD
 	int ret, i;
 	struct fsg_opts *fsg_opts;
 	struct fsg_config m_config;
@@ -1390,6 +1472,10 @@ static int mass_storage_function_init(struct android_usb_function *f,
 	struct fsg_common *common;
 	int err;
 >>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
+=======
+	int i;
+	int ret;
+>>>>>>> d5571f2... usb: gadget: fix build
 
 	pr_debug("%s(): Inside\n", __func__);
 	config = kzalloc(sizeof(struct mass_storage_function_config),
@@ -1397,6 +1483,7 @@ static int mass_storage_function_init(struct android_usb_function *f,
 	if (!config)
 		return -ENOMEM;
 	f->config = config;
+<<<<<<< HEAD
 
 	config->f_ms_inst = usb_get_function_instance("mass_storage");
 	if (IS_ERR(config->f_ms_inst)) {
@@ -1483,12 +1570,35 @@ err_usb_get_function:
 	usb_put_function_instance(config->f_ms_inst);
 
 err_usb_get_function_instance:
+=======
+
+	for (i = 0; i < MAX_MS_INSTANCES; i++) {
+		config->f_ms_inst[i] = usb_get_function_instance("mass_storage");
+		if (IS_ERR(config->f_ms_inst[i])) {
+			ret = PTR_ERR(config->f_ms_inst[i]);
+			goto err_usb_get_function_instance;
+		}
+		config->f_ms[i] = usb_get_function(config->f_ms_inst[i]);
+		if (IS_ERR(config->f_ms[i])) {
+			ret = PTR_ERR(config->f_ms[i]);
+			goto err_usb_get_function;
+		}
+	}
+	return 0;
+err_usb_get_function_instance:
+	while (i-- > 0) {
+		usb_put_function(config->f_ms[i]);
+err_usb_get_function:
+		usb_put_function_instance(config->f_ms_inst[i]);
+	}
+>>>>>>> d5571f2... usb: gadget: fix build
 	return ret;
 }
 
 static void mass_storage_function_cleanup(struct android_usb_function *f)
 {
 	struct mass_storage_function_config *config = f->config;
+<<<<<<< HEAD
 
 	/* release what we required */
 	struct fsg_opts *fsg_opts;
@@ -1500,6 +1610,14 @@ static void mass_storage_function_cleanup(struct android_usb_function *f)
 	usb_put_function(config->f_ms);
 	usb_put_function_instance(config->f_ms_inst);
 
+=======
+	int i;
+
+	for (i = 0; i < MAX_MS_INSTANCES; i++) {
+		usb_put_function(config->f_ms[i]);
+		usb_put_function_instance(config->f_ms_inst[i]);
+	}
+>>>>>>> d5571f2... usb: gadget: fix build
 	kfree(f->config);
 	f->config = NULL;
 }
@@ -1509,6 +1627,7 @@ static int mass_storage_function_bind_config(struct android_usb_function *f,
 {
 	struct mass_storage_function_config *config = f->config;
 	int ret = 0;
+<<<<<<< HEAD
 
 	/* no_configfs :true, make fsg_bind skip for creating fsg thread */
 	ret = usb_add_function(c, config->f_ms);
@@ -1527,6 +1646,35 @@ static ssize_t mass_storage_inquiry_show(struct device *dev,
 	fsg_opts = fsg_opts_from_func_inst(config->f_ms_inst);
 
 	return fsg_inquiry_show(fsg_opts->common, buf);
+=======
+	int i;
+
+	config->instances_on = config->instances;
+	for (i = 0; i < config->instances_on; i++) {
+		ret = usb_add_function(c, config->f_ms[i]);
+		if (ret) {
+			pr_err("Could not bind ms%u config\n", i);
+			goto err_usb_add_function;
+		}
+	}
+
+	return 0;
+
+err_usb_add_function:
+	while (i-- > 0)
+		usb_remove_function(c, config->f_ms[i]);
+	return ret;
+}
+
+static void mass_storage_function_unbind_config(struct android_usb_function *f,
+					       struct usb_configuration *c)
+{
+	int i;
+	struct mass_storage_function_config *config = f->config;
+
+	for (i = 0; i < config->instances_on; i++)
+		usb_remove_function(c, config->f_ms[i]);
+>>>>>>> d5571f2... usb: gadget: fix build
 }
 
 static ssize_t mass_storage_inquiry_store(struct device *dev,
@@ -1550,9 +1698,13 @@ static ssize_t mass_storage_bicr_show(struct device *dev,
 {
 	struct android_usb_function *f = dev_get_drvdata(dev);
 	struct mass_storage_function_config *config = f->config;
+<<<<<<< HEAD
 	struct fsg_opts *fsg_opts = fsg_opts_from_func_inst(config->f_ms_inst);
 
 	return fsg_bicr_show(fsg_opts->common, buf);
+=======
+	return sprintf(buf, "%d\n", config->instances);
+>>>>>>> d5571f2... usb: gadget: fix build
 }
 
 static ssize_t mass_storage_bicr_store(struct device *dev,
@@ -1560,9 +1712,19 @@ static ssize_t mass_storage_bicr_store(struct device *dev,
 {
 	struct android_usb_function *f = dev_get_drvdata(dev);
 	struct mass_storage_function_config *config = f->config;
+<<<<<<< HEAD
 	struct fsg_opts *fsg_opts = fsg_opts_from_func_inst(config->f_ms_inst);
 
 	return fsg_bicr_store(fsg_opts->common, buf, size);
+=======
+	int value;
+
+	sscanf(buf, "%d", &value);
+	if (value > MAX_MS_INSTANCES)
+		value = MAX_MS_INSTANCES;
+	config->instances = value;
+	return size;
+>>>>>>> d5571f2... usb: gadget: fix build
 }
 
 static DEVICE_ATTR(bicr, S_IRUGO | S_IWUSR,
@@ -1785,6 +1947,7 @@ static int midi_function_bind_config(struct android_usb_function *f,
 			MIDI_QUEUE_LENGTH, config);
 }
 
+<<<<<<< HEAD
 static ssize_t midi_alsa_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -1808,6 +1971,15 @@ static struct android_usb_function midi_function = {
 	.cleanup	= midi_function_cleanup,
 	.bind_config	= midi_function_bind_config,
 	.attributes	= midi_function_attributes,
+=======
+static struct android_usb_function audio_source_function = {
+	.name		= "audio_source",
+	.init		= audio_source_function_init,
+	.cleanup	= audio_source_function_cleanup,
+	.bind_config	= audio_source_function_bind_config,
+	.unbind_config	= audio_source_function_unbind_config,
+	.attributes	= audio_source_function_attributes,
+>>>>>>> d5571f2... usb: gadget: fix build
 };
 #endif
 
@@ -1871,7 +2043,24 @@ struct device *create_function_device(char *name)
 	NULL
 };
 
+<<<<<<< HEAD
 >>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
+=======
+struct device *create_function_device(char *name)
+{
+	struct android_dev *dev = _android_dev;
+	struct android_usb_function **functions;
+	struct android_usb_function *f;
+
+	functions = dev->functions;
+
+	while ((f = *functions++))
+		if (!strcmp(name, f->dev_name))
+			return f->dev;
+
+	return ERR_PTR(-EINVAL);
+}
+>>>>>>> d5571f2... usb: gadget: fix build
 
 static int android_init_functions(struct android_usb_function **functions,
 				  struct usb_composite_dev *cdev)
