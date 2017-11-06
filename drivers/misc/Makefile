@@ -65,3 +65,6 @@ obj-$(CONFIG_MOT_UTAG) += utag/
 #Lenovo-sw quebs2 added 20150510 begin,support efuse check with sbc flag
 obj-$(CONFIG_EFUSE_SBC_CHECK) += efusecheck/
 #Lenovo-sw quebs2 added 20150510 end,support efuse check with sbc flag
+#add usb fast charge begin -izaqKull
+obj-$(CONFIG_FORCE_FAST_CHARGE) += fastchg.o
+#end -izaqKull
