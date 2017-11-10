@@ -11,82 +11,21 @@
  * GNU General Public License for more details.
  */
 
-#define LOG_TAG "DEBUG"
+#include "ddp_debug.h"
 
-#include <linux/string.h>
-#include <linux/uaccess.h>
-#include <linux/debugfs.h>
-#include <mt-plat/aee.h>
-#include "disp_assert_layer.h"
-#include <linux/dma-mapping.h>
-#include <linux/delay.h>
-#include <linux/sched.h>
-#include <linux/interrupt.h>
-#include <linux/time.h>
-#include <linux/vmalloc.h>
-
-#include "m4u.h"
-
-#include "cmdq_def.h"
-#include "cmdq_record.h"
-#include "cmdq_reg.h"
-#include "cmdq_core.h"
-
-#include "disp_drv_ddp.h"
-
-#include "ddp_reg.h"
-#include "ddp_drv.h"
-#include "ddp_wdma.h"
-#include "ddp_wdma_ex.h"
-#include "ddp_hal.h"
-#include "ddp_path.h"
-#include "ddp_aal.h"
-#include "ddp_pwm.h"
-#include "ddp_info.h"
-#include "ddp_dsi.h"
-#include "ddp_ovl.h"
-
-#include "ddp_manager.h"
-#include "disp_log.h"
-#include "ddp_met.h"
-#include "display_recorder.h"
-#include "disp_session.h"
-#include "primary_display.h"
-#include "ddp_irq.h"
-#include "mtk_disp_mgr.h"
-#include "disp_drv_platform.h"
-
-#pragma GCC optimize("O0")
-
-#ifndef DISP_NO_AEE
-#define ddp_aee_print(string, args...) do {							\
-	char ddp_name[100];									\
-	snprintf(ddp_name, 100, "[DDP]"string, ##args);						\
-	aee_kernel_warning_api(__FILE__, __LINE__, DB_OPT_MMPROFILE_BUFFER,			\
-			       ddp_name, "[DDP] error"string, ##args);				\
-	pr_err("DDP " "error: "string, ##args);							\
-} while (0)
-#else
-#define ddp_aee_print(string, args...) pr_err("DDP " "error: "string, ##args)
-#endif
-
-/* --------------------------------------------------------------------------- */
-/* External variable declarations */
-/* --------------------------------------------------------------------------- */
-/* --------------------------------------------------------------------------- */
-/* Debug Options */
-/* --------------------------------------------------------------------------- */
-static const long int DEFAULT_LOG_FPS_WND_SIZE = 30;
+unsigned int gResetRDMAEnable = 1;
 unsigned int gOVLBackground = 0x0;
-unsigned int gDumpMemoutCmdq = 0;
-unsigned int gEnableUnderflowAEE = 0;
+unsigned int gEnableIRQ = 0;
+unsigned int gUltraEnable = 1;
+unsigned long int gRDMAUltraSetting = 0;
+unsigned long int gRDMAFIFOLen = 32;
 
 unsigned int disp_low_power_enlarge_blanking = 0;
 unsigned int disp_low_power_disable_ddp_clock = 0;
 unsigned int disp_low_power_disable_fence_thread = 0;
 unsigned int disp_low_power_remove_ovl = 1;
+
 unsigned int gSkipIdleDetect = 0;
-unsigned int gDumpClockStatus = 1;
 #ifdef DISP_ENABLE_SODI_FOR_VIDEO_MODE
 unsigned int gEnableSODIControl = 1;
   /* workaround for SVP IT, todo: please K fix it */
@@ -100,25 +39,17 @@ unsigned int gEnableSODIControl = 0;
 unsigned int gPrefetchControl = 0;
 #endif
 
-/* mutex SOF at raing edge of vsync, can save more time for cmdq config */
+unsigned int gEnableSWTrigger = 0;
 unsigned int gEnableMutexRisingEdge = 0;
-/* only write dirty register, reduce register number write by cmdq */
-unsigned int gEnableReduceRegWrite = 0;
+unsigned int gDisableSODIForTriggerLoop = 1;
 
 unsigned int gDumpConfigCMD = 0;
 unsigned int gDumpESDCMD = 0;
 
-unsigned int gESDEnableSODI = 1;
-unsigned int gEnableOVLStatusCheck = 0;
-unsigned int gEnableDSIStateCheck = 0;
-
-unsigned int gResetRDMAEnable = 1;
-unsigned int gEnableSWTrigger = 0;
-unsigned int gMutexFreeRun = 1;
-
 unsigned int gResetOVLInAALTrigger = 0;
 unsigned int gDisableOVLTF = 0;
 
+<<<<<<< HEAD
 unsigned long int gRDMAUltraSetting = 0;	/* so we can modify RDMA ultra at run-time */
 unsigned long int gRDMAFIFOLen = 32;
 static bool enable_ovl1_to_mem = true;
@@ -1372,114 +1303,21 @@ static ssize_t layer_debug_write(struct file *file,
 {
 	MTKFB_LAYER_DBG_OPTIONS *dbgopt =
 	    (MTKFB_LAYER_DBG_OPTIONS *) file->private_data;
+=======
+unsigned int gDumpMemoutCmdq = 0;
+>>>>>>> af3b0d1... mediatek: video: remove debug code
 
-	DISPMSG("DISP/DBG " "mtkfb_layer%d write is not implemented yet\n",
-		       dbgopt->layer_index);
+unsigned int gEnableReduceRegWrite = 0;
+unsigned int gEnableDSIStateCheck = 0;
+unsigned int gMutexFreeRun = 1;
 
-	return count;
-}
+// copied from mtkfb_debug.c
+unsigned int g_mobilelog = 1;
+unsigned int g_fencelog = 0;
+unsigned int g_loglevel = 3;
+unsigned int g_rcdlevel = 0;
 
-static int layer_debug_release(struct inode *inode, struct file *file)
+unsigned int ddp_debug_analysis_to_buffer(void)
 {
-	MTKFB_LAYER_DBG_OPTIONS *dbgopt;
-
-	dbgopt = (MTKFB_LAYER_DBG_OPTIONS *) file->private_data;
-
-	if (dbgopt->working_buf != 0)
-		vfree((void *)dbgopt->working_buf);
-
-	dbgopt->working_buf = 0;
-
 	return 0;
-}
-
-static const struct file_operations layer_debug_fops = {
-	.read = layer_debug_read,
-	.write = layer_debug_write,
-	.open = layer_debug_open,
-	.release = layer_debug_release,
-};
-
-void sub_debug_init(void)
-{
-	unsigned int i;
-	unsigned char a[13];
-
-	a[0] = 'm';
-	a[1] = 't';
-	a[2] = 'k';
-	a[3] = 'f';
-	a[4] = 'b';
-	a[5] = '_';
-	a[6] = 'l';
-	a[7] = 'a';
-	a[8] = 'y';
-	a[9] = 'e';
-	a[10] = 'r';
-	a[11] = '0';
-	a[12] = '\0';
-
-	for (i = 0; i < DDP_OVL_LAYER_MUN; i++) {
-		a[11] = '0' + i;
-		mtkfb_layer_dbg_opt[i].layer_index = i;
-		mtkfb_layer_dbgfs[i] = debugfs_create_file(a,
-							   S_IFREG | S_IRUGO,
-							   disp_debugDir,
-							   (void *)&mtkfb_layer_dbg_opt[i],
-							   &layer_debug_fops);
-	}
-}
-
-void sub_debug_deinit(void)
-{
-	unsigned int i;
-
-	for (i = 0; i < DDP_OVL_LAYER_MUN; i++)
-		debugfs_remove(mtkfb_layer_dbgfs[i]);
-}
-
-unsigned int ddp_dump_reg_to_buf(unsigned int start_module, unsigned long *addr)
-{
-	unsigned int cnt = 0;
-	unsigned long reg_addr;
-
-	switch (start_module) {
-	case 0:	/* DISP_MODULE_WDMA0: */
-		reg_addr = DISP_REG_WDMA_INTEN;
-
-		while (reg_addr <= DISP_REG_WDMA_PRE_ADD2) {
-			addr[cnt++] = DISP_REG_GET(reg_addr);
-			reg_addr += 4;
-		}
-		/* fallthrough */
-	case 1:	/* DISP_MODULE_OVL: */
-		reg_addr = DISP_REG_OVL_STA;
-
-		while (reg_addr <= DISP_REG_OVL_L3_PITCH) {
-			addr[cnt++] = DISP_REG_GET(reg_addr);
-			reg_addr += 4;
-		}
-		/* fallthrough */
-	case 2:		/* DISP_MODULE_RDMA: */
-		reg_addr = DISP_REG_RDMA_INT_ENABLE;
-
-		while (reg_addr <= DISP_REG_RDMA_PRE_ADD_1) {
-			addr[cnt++] = DISP_REG_GET(reg_addr);
-			reg_addr += 4;
-		}
-		break;
-	}
-	return cnt * sizeof(unsigned long);
-}
-
-unsigned int ddp_dump_lcm_param_to_buf(unsigned int start_module, unsigned long *addr)
-{
-	unsigned int cnt = 0;
-
-	if (start_module == 3) {/*3 correspond dbg4*/
-		addr[cnt++] = primary_display_get_width();
-		addr[cnt++] = primary_display_get_height();
-	}
-
-	return cnt * sizeof(unsigned long);
 }
