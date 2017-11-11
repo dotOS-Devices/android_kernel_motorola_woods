@@ -525,6 +525,25 @@ static void musb_advance_schedule(struct musb *musb, struct urb *urb,
 	struct musb_hw_ep *ep = qh->hw_ep;
 	int ready = qh->is_ready;
 	int status;
+	u64 urb_val;
+
+	/* special case to handle QH memory leak */
+	urb_val = (u64)(uintptr_t)urb;
+	switch (urb_val) {
+	case QH_FREE_RESCUE_INTERRUPT:
+	case QH_FREE_RESCUE_EP_DISABLE:
+		DBG(0, "case<%d>, ep<%d>, qh<%p> type<%d>, is_in<%d>, empty<%d>, use_qmu<%d>\n",
+				(unsigned int)urb_val, hw_ep->epnum, qh, qh->type,
+				is_in, list_empty(&qh->hep->urb_list),
+#ifdef MUSB_QMU_SUPPORT_HOST
+				qh->is_use_qmu);
+#else
+				0);
+#endif
+		goto check_recycle_qh;
+	default:
+		break;
+	}
 
 	status = (urb->status == -EINPROGRESS) ? 0 : urb->status;
 
@@ -543,6 +562,10 @@ static void musb_advance_schedule(struct musb *musb, struct urb *urb,
 	qh->is_ready = 0;
 	musb_giveback(musb, urb, status);
 
+<<<<<<< HEAD
+=======
+	/* QH might be freed after giveback, check again */
+>>>>>>> fb4e5a3... mediatek: usb20: update
 	if ((is_in && !hw_ep->in_qh)
 			|| (!is_in && !hw_ep->out_qh)
 	   ) {
@@ -551,6 +574,7 @@ static void musb_advance_schedule(struct musb *musb, struct urb *urb,
 	}
 	qh->is_ready = ready;
 
+check_recycle_qh:
 	/* reclaim resources (and bandwidth) ASAP; deschedule it, and
 	 * invalidate qh as soon as list_empty(&hep->urb_list)
 	 */
@@ -1509,7 +1533,7 @@ void musb_host_tx(struct musb *musb, u8 epnum)
 	struct musb_hw_ep *hw_ep = musb->endpoints + epnum;
 	void __iomem *epio = hw_ep->regs;
 	struct musb_qh *qh = hw_ep->out_qh;
-	struct urb *urb = next_urb(qh);
+	struct urb *urb = NULL;
 	u32 status = 0;
 	void __iomem *mbase = musb->mregs;
 	struct dma_channel *dma;
@@ -1519,13 +1543,22 @@ void musb_host_tx(struct musb *musb, u8 epnum)
 	if (qh && qh->is_use_qmu)
 		return;
 #endif
+<<<<<<< HEAD
+=======
+	if (unlikely(!qh)) {
+		DBG(0, "hw_ep:%d, QH NULL\n", epnum);
+		return;
+	}
+>>>>>>> fb4e5a3... mediatek: usb20: update
 
 	musb_ep_select(mbase, epnum);
 	tx_csr = musb_readw(epio, MUSB_TXCSR);
 
+	urb = next_urb(qh);
 	/* with CPPI, DMA sometimes triggers "extra" irqs */
-	if (!urb) {
+	if (unlikely(!urb)) {
 		DBG(0, "extra TX%d ready, csr %04x\n", epnum, tx_csr);
+		musb_advance_schedule(musb, (struct urb *)QH_FREE_RESCUE_INTERRUPT, hw_ep, USB_DIR_OUT);
 		return;
 	}
 
@@ -1778,7 +1811,7 @@ void musb_host_tx(struct musb *musb, u8 epnum)
  */
 void musb_host_rx(struct musb *musb, u8 epnum)
 {
-	struct urb *urb;
+	struct urb *urb = NULL;
 	struct musb_hw_ep *hw_ep = musb->endpoints + epnum;
 	void __iomem *epio = hw_ep->regs;
 	struct musb_qh *qh = hw_ep->in_qh;
@@ -1796,6 +1829,13 @@ void musb_host_rx(struct musb *musb, u8 epnum)
 	if (qh && qh->is_use_qmu)
 		return;
 #endif
+<<<<<<< HEAD
+=======
+	if (unlikely(!qh)) {
+		DBG(0, "hw_ep:%d, QH NULL\n", epnum);
+		return;
+	}
+>>>>>>> fb4e5a3... mediatek: usb20: update
 
 	musb_ep_select(mbase, epnum);
 
@@ -1816,6 +1856,7 @@ void musb_host_rx(struct musb *musb, u8 epnum)
 		    musb_readw(epio, MUSB_RXCOUNT));
 		/* musb_h_flush_rxfifo(hw_ep, MUSB_RXCSR_CLRDATATOG); */
 		musb_h_flush_rxfifo(hw_ep, 0);
+		musb_advance_schedule(musb, (struct urb *)QH_FREE_RESCUE_INTERRUPT, hw_ep, USB_DIR_IN);
 		return;
 	}
 
@@ -2189,6 +2230,77 @@ static int musb_schedule(struct musb *musb, struct musb_qh *qh, int is_in)
 		hw_ep = musb->control_ep;
 		goto success;
 	}
+#ifdef MUSB_QMU_LIMIT_SUPPORT
+	if (isoc_ep_gpd_count
+			&& qh->type == USB_ENDPOINT_XFER_ISOC) {
+		for (epnum = 1, hw_ep = musb->endpoints + 1;
+				epnum < MAX_QMU_EP; epnum++, hw_ep++) {
+			/* int	diff; */
+
+			if (musb_ep_get_qh(hw_ep, is_in) != NULL)
+				continue;
+
+<<<<<<< HEAD
+#ifdef MUSB_QMU_SUPPORT_HOST
+	if (isoc_ep_gpd_count
+			&& qh->type == USB_ENDPOINT_XFER_ISOC) {
+		for (epnum = isoc_ep_start_idx, hw_ep = musb->endpoints + isoc_ep_start_idx;
+				epnum < musb->nr_endpoints; epnum++, hw_ep++) {
+			/* int  diff; */
+
+=======
+			hw_end = epnum;
+			hw_ep = musb->endpoints + hw_end;	/* got the right ep */
+			DBG(1, "qh->type:%d, find a hw_ep%d\n", qh->type, hw_end);
+			break;
+		}
+
+		if (hw_end) {
+			idle = 1;
+			qh->mux = 0;
+			DBG(1, "qh->type:%d, find a hw_ep%d, grap qmu_isoc_ep\n", qh->type, hw_end);
+			goto success;
+		}
+	}
+
+	for (epnum = (MAX_QMU_EP + 1), hw_ep = musb->endpoints + (MAX_QMU_EP + 1);
+		epnum < musb->nr_endpoints; epnum++, hw_ep++) {
+		if (musb_ep_get_qh(hw_ep, is_in) != NULL)
+			continue;
+
+		hw_end = epnum;
+		hw_ep = musb->endpoints + hw_end;	/* got the right ep */
+		break;
+	}
+
+	if (hw_end) {
+		idle = 1;
+		qh->mux = 0;
+		goto success;
+	}
+
+	if (!hw_end) {
+		for (epnum = 1, hw_ep = musb->endpoints + 1;
+				epnum <= MAX_QMU_EP; epnum++, hw_ep++) {
+
+			if (musb_ep_get_qh(hw_ep, is_in) != NULL)
+				continue;
+
+			hw_end = epnum;
+			hw_ep = musb->endpoints + hw_end;	/* got the right ep */
+			break;
+		}
+	}
+
+	if (hw_end) {
+		idle = 1;
+		qh->mux = 0;
+		goto success;
+	} else {
+		WARNING("EP OVERFLOW.\n");
+		return -ENOSPC;
+	}
+#endif
 
 #ifdef MUSB_QMU_SUPPORT_HOST
 	if (isoc_ep_gpd_count
@@ -2197,6 +2309,7 @@ static int musb_schedule(struct musb *musb, struct musb_qh *qh, int is_in)
 				epnum < musb->nr_endpoints; epnum++, hw_ep++) {
 			/* int  diff; */
 
+>>>>>>> fb4e5a3... mediatek: usb20: update
 			if (musb_ep_get_qh(hw_ep, is_in) != NULL)
 				continue;
 
@@ -2285,7 +2398,10 @@ success:
 
 
 	if (idle) {
+<<<<<<< HEAD
 
+=======
+>>>>>>> fb4e5a3... mediatek: usb20: update
 		if (USB_ENDPOINT_XFER_ISOC == qh->type) {
 			static DEFINE_RATELIMIT_STATE(ratelimit, 1 * HZ, 10);
 			static int skip_cnt; /* dft to 0 */
@@ -2297,10 +2413,24 @@ success:
 				skip_cnt++;
 		}
 #ifdef MUSB_QMU_SUPPORT_HOST
+<<<<<<< HEAD
+=======
+#ifdef MUSB_QMU_LIMIT_SUPPORT
+		if (isoc_ep_gpd_count &&
+			qh->type == USB_ENDPOINT_XFER_ISOC &&
+			hw_end <= MAX_QMU_EP)
+			qh->is_use_qmu = 1;
+#else
+>>>>>>> fb4e5a3... mediatek: usb20: update
 		/* downgrade to non-qmu if no specific ep grabbed when isoc_ep_gpd_count is set*/
 		if (isoc_ep_gpd_count && qh->type == USB_ENDPOINT_XFER_ISOC  && hw_end < isoc_ep_start_idx)
 			qh->is_use_qmu = 0;
 
+<<<<<<< HEAD
+=======
+#endif
+
+>>>>>>> fb4e5a3... mediatek: usb20: update
 		if (qh->is_use_qmu) {
 			musb_ep_set_qh(hw_ep, is_in, qh);
 			mtk_kick_CmdQ(musb, is_in ? 1:0, qh, next_urb(qh));
@@ -2356,6 +2486,7 @@ static int musb_urb_enqueue(struct usb_hcd *hcd, struct urb *urb, gfp_t mem_flag
 	if (mtk_host_qmu_concurrent && qh && qh->is_use_qmu && (ret == 0)) {
 		mtk_kick_CmdQ(musb, (epd->bEndpointAddress & USB_ENDPOINT_DIR_MASK) ? 1:0, qh, urb);
 		spin_unlock_irqrestore(&musb->lock, flags);
+<<<<<<< HEAD
 		return ret;
 	}
 #endif
@@ -2364,6 +2495,16 @@ static int musb_urb_enqueue(struct usb_hcd *hcd, struct urb *urb, gfp_t mem_flag
 		spin_unlock_irqrestore(&musb->lock, flags);
 		return ret;
 	}
+=======
+		return ret;
+	}
+#endif
+
+	if (qh || ret) {
+		spin_unlock_irqrestore(&musb->lock, flags);
+		return ret;
+	}
+>>>>>>> fb4e5a3... mediatek: usb20: update
 
 	/* Allocate and initialize qh, minimizing the work done each time
 	 * hw_ep gets reprogrammed, or with irqs blocked.  Then schedule it.
@@ -2606,17 +2747,28 @@ static int musb_urb_dequeue(struct usb_hcd *hcd, struct urb *urb, int status)
 	int is_in = usb_pipein(urb->pipe);
 	int ret;
 
-	DBG(4, "urb=%p, dev%d ep%d%s\n", urb,
-	    usb_pipedevice(urb->pipe), usb_pipeendpoint(urb->pipe), is_in ? "in" : "out");
-
 	spin_lock_irqsave(&musb->lock, flags);
+	DBG(0, "urb=%p, dev%d ep%d%s\n",
+			urb,
+			usb_pipedevice(urb->pipe),
+			usb_pipeendpoint(urb->pipe),
+			is_in ? "in" : "out");
 	ret = usb_hcd_check_unlink_urb(hcd, urb, status);
-	if (ret)
+	if (ret) {
+		DBG(0, "ret<%d>\n", ret);
 		goto done;
+	}
 
 	qh = urb->hcpriv;
-	if (!qh)
+	if (!qh) {
+		DBG(0, "!qh\n");
 		goto done;
+	}
+	DBG(0, "qh<%p>, ready<%d>, prev_condition<%d>, cur_qh<%d>\n",
+			qh,
+			qh->is_ready,
+			urb->urb_list.prev != &qh->hep->urb_list,
+			musb_ep_get_qh(qh->hw_ep, is_in) == qh);
 
 	/*
 	 * Any URB not actively programmed into endpoint hardware can be
@@ -2633,9 +2785,19 @@ static int musb_urb_dequeue(struct usb_hcd *hcd, struct urb *urb, int status)
 	if (!qh->is_ready
 	    || urb->urb_list.prev != &qh->hep->urb_list || musb_ep_get_qh(qh->hw_ep, is_in) != qh) {
 		int ready = qh->is_ready;
+		struct musb_hw_ep *hw_ep = qh->hw_ep;
 
 		qh->is_ready = 0;
 		musb_giveback(musb, urb, 0);
+
+		/* QH might be freed after giveback, check again */
+		if ((is_in && !hw_ep->in_qh)
+				|| (!is_in && !hw_ep->out_qh)
+		   ) {
+			DBG(0, "QH already freed\n");
+			goto done;
+		}
+
 		qh->is_ready = ready;
 
 		/* If nothing else (usually musb_giveback) is using it
@@ -2643,6 +2805,7 @@ static int musb_urb_dequeue(struct usb_hcd *hcd, struct urb *urb, int status)
 		 */
 		if (ready && list_empty(&qh->hep->urb_list)) {
 #ifdef MUSB_QMU_SUPPORT_HOST
+<<<<<<< HEAD
 			if (qh->is_use_qmu)
 				mtk_disable_q(musb, qh->hw_ep->epnum, is_in);
 #endif
@@ -2652,10 +2815,40 @@ static int musb_urb_dequeue(struct usb_hcd *hcd, struct urb *urb, int status)
 			if (musb_host_dynamic_fifo && qh->type != USB_ENDPOINT_XFER_CONTROL)
 				musb_host_free_ep_fifo(musb, qh, is_in);
 
+=======
+			if (qh->is_use_qmu && mtk_host_qmu_concurrent) {
+				DBG(0, "qmu with concurrent, exit\n");
+				goto done;
+			} else
+				DBG(0, "qmu<%d>, concurrent<%d>\n",
+						qh->is_use_qmu,
+						mtk_host_qmu_concurrent);
+#endif
+			DBG(0, "why here, this is ring case?\n");
+			BUG();
+
+			qh->hep->hcpriv = NULL;
+			list_del(&qh->ring);
+
+>>>>>>> fb4e5a3... mediatek: usb20: update
 			kfree(qh);
 		}
-	} else
+	} else {
+#ifdef CONFIG_MTK_MUSB_QMU_SUPPORT
+		/* qmu non-concurrent case, stop HW */
+		if (qh->is_use_qmu && !mtk_host_qmu_concurrent)
+			mtk_disable_q(musb, qh->hw_ep->epnum, is_in);
+
+		if (qh->is_use_qmu && mtk_host_qmu_concurrent) {
+			/* concurrent case, recycle SW part, leave HW part go */
+			ret = 0;
+			musb_advance_schedule(musb, urb, qh->hw_ep, is_in);
+		} else
+			ret = musb_cleanup_urb(urb, qh);
+#else
 		ret = musb_cleanup_urb(urb, qh);
+#endif
+	}
 done:
 	spin_unlock_irqrestore(&musb->lock, flags);
 	return ret;
@@ -2682,21 +2875,51 @@ static void musb_h_disable(struct usb_hcd *hcd, struct usb_host_endpoint *hep)
 		else
 			qh = hw_ep->out_qh;
 
+<<<<<<< HEAD
 		if (qh == NULL)
 			goto exit;
 
 		DBG(0, "qh:%p, is_in:%x, epnum:%d\n", qh, is_in, epnum);
+=======
+		if (qh == NULL) {
+			DBG(1, "qh:%p, is_in:%x, epnum:%d, hep<%p>\n",
+					qh, is_in, epnum, hep);
+			goto exit;
+		}
+>>>>>>> fb4e5a3... mediatek: usb20: update
 
 		if (is_in)
 			hep = hw_ep->in_qh->hep;
 		else
 			hep = hw_ep->out_qh->hep;
 
+<<<<<<< HEAD
 	} else {
 		qh = hep->hcpriv;
 		if (qh == NULL)
 			goto exit;
 	}
+=======
+		DBG(0, "qh:%p, is_in:%x, epnum:%d, hep<%p>\n",
+				qh, is_in, epnum, hep);
+
+	} else {
+		qh = hep->hcpriv;
+		if (qh == NULL) {
+			DBG(1, "qh:%p, virt-epnum:%d, hep<%p>\n",
+					qh, hep->desc.bEndpointAddress, hep);
+			goto exit;
+		}
+
+		DBG(0, "qh:%p, is_in:%x, epnum:%d, hep<%p>\n",
+				qh, is_in, qh->hw_ep->epnum, hep);
+	}
+#ifdef CONFIG_MTK_MUSB_QMU_SUPPORT
+	/* abort HW transaction on this ep */
+	if (qh->is_use_qmu)
+		mtk_disable_q(musb, qh->hw_ep->epnum, is_in);
+#endif
+>>>>>>> fb4e5a3... mediatek: usb20: update
 
 	/* NOTE: qh is invalid unless !list_empty(&hep->urb_list) */
 
@@ -2709,9 +2932,18 @@ static void musb_h_disable(struct usb_hcd *hcd, struct usb_host_endpoint *hep)
 		if (urb) {
 			if (!urb->unlinked)
 				urb->status = -ESHUTDOWN;
+			DBG(0, "list_empty<%d>, urb<%p,%d,%d>\n",
+					list_empty(&hep->urb_list),
+					urb,
+					urb->unlinked,
+					urb->status);
 			/* cleanup */
 			musb_cleanup_urb(urb, qh);
+		} else {
+			DBG(0, "list_empty<%d>\n", list_empty(&hep->urb_list));
+			musb_advance_schedule(musb, (struct urb *)QH_FREE_RESCUE_EP_DISABLE, qh->hw_ep, is_in);
 		}
+
 		/* Then nuke all the others ... and advance the
 		 * queue on hw_ep (e.g. bulk ring) when we're done.
 		 */
@@ -2721,6 +2953,9 @@ static void musb_h_disable(struct usb_hcd *hcd, struct usb_host_endpoint *hep)
 			musb_advance_schedule(musb, urb, qh->hw_ep, is_in);
 		}
 	} else {
+		DBG(0, "why here, this is ring case?\n");
+		BUG();
+
 		/* Just empty the queue; the hardware is busy with
 		 * other transfers, and since !qh->is_ready nothing
 		 * will activate any of these as it advances.
@@ -2734,9 +2969,12 @@ static void musb_h_disable(struct usb_hcd *hcd, struct usb_host_endpoint *hep)
 		hep->hcpriv = NULL;
 		list_del(&qh->ring);
 
+<<<<<<< HEAD
 		if (musb_host_dynamic_fifo && qh->type != USB_ENDPOINT_XFER_CONTROL)
 			musb_host_free_ep_fifo(musb, qh, is_in);
 
+=======
+>>>>>>> fb4e5a3... mediatek: usb20: update
 		kfree(qh);
 	}
 exit:
