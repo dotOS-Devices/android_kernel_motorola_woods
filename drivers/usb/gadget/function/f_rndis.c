@@ -70,16 +70,20 @@
  *   - MS-Windows drivers sometimes emit undocumented requests.
  */
 
-static unsigned int rndis_dl_max_pkt_per_xfer = 3;
+static unsigned int rndis_dl_max_pkt_per_xfer = 10;
 module_param(rndis_dl_max_pkt_per_xfer, uint, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(rndis_dl_max_pkt_per_xfer,
 	"Maximum packets per transfer for DL aggregation");
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 static unsigned int rndis_ul_max_pkt_per_xfer = 1;
 =======
 static unsigned int rndis_ul_max_pkt_per_xfer = 3;
 >>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
+=======
+static unsigned int rndis_ul_max_pkt_per_xfer = 1;
+>>>>>>> f8c5db8... usb: gadget: fix mtk support
 module_param(rndis_ul_max_pkt_per_xfer, uint, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(rndis_ul_max_pkt_per_xfer,
        "Maximum packets per transfer for UL aggregation");
@@ -408,9 +412,12 @@ static struct sk_buff *rndis_add_header(struct gether *port,
 							sizeof(*header));
 			header->DataOffset = cpu_to_le32(36);
 			header->DataLength = cpu_to_le32(skb->len);
+<<<<<<< HEAD
 			pr_debug("MessageLength:%d DataLength:%d\n",
 						header->MessageLength,
 						header->DataLength);
+=======
+>>>>>>> f8c5db8... usb: gadget: fix mtk support
 			return skb;
 		}
 		pr_err("RNDIS header is NULL.\n");
@@ -512,6 +519,11 @@ static void rndis_command_complete(struct usb_ep *ep, struct usb_request *req)
 =======
 >>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 
+	if (!rndis->port.func.config || !rndis->port.func.config->cdev)
+		return;
+
+	cdev = rndis->port.func.config->cdev;
+
 	/* received RNDIS command from USB_CDC_SEND_ENCAPSULATED_COMMAND */
 //	spin_lock(&dev->lock);
 	status = rndis_msg_parser(rndis->config, (u8 *) req->buf);
@@ -522,6 +534,7 @@ static void rndis_command_complete(struct usb_ep *ep, struct usb_request *req)
 	buf = (rndis_init_msg_type *)req->buf;
 
 	if (buf->MessageType == RNDIS_MSG_INIT) {
+<<<<<<< HEAD
 <<<<<<< HEAD
 		if (buf->MaxTransferSize > 2048) {
 			rndis->port.multi_pkt_xfer = 1;
@@ -534,6 +547,14 @@ static void rndis_command_complete(struct usb_ep *ep, struct usb_request *req)
 			rndis->port.multi_pkt_xfer = 1;
 		else
 >>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
+=======
+		if (buf->MaxTransferSize > 2048) {
+			rndis->port.multi_pkt_xfer = 1;
+			rndis->port.dl_max_transfer_len = buf->MaxTransferSize;
+			gether_update_dl_max_xfer_size(&rndis->port,
+					rndis->port.dl_max_transfer_len);
+		} else
+>>>>>>> f8c5db8... usb: gadget: fix mtk support
 			rndis->port.multi_pkt_xfer = 0;
 		pr_info("%s: MaxTransferSize: %d : Multi_pkt_txr: %s\n",
 				__func__, buf->MaxTransferSize,
@@ -595,11 +616,14 @@ rndis_setup(struct usb_function *f, const struct usb_ctrlrequest *ctrl)
 				req->complete = rndis_response_complete;
 				req->context = rndis;
 
+<<<<<<< HEAD
 				tmp = (__le32 *)buf;
 				MsgType   = get_unaligned_le32(tmp++);
 				MsgLength = get_unaligned_le32(tmp++);
 				MsgID = get_unaligned_le32(tmp++);
 
+=======
+>>>>>>> f8c5db8... usb: gadget: fix mtk support
 				rndis_free_response(rndis->config, buf);
 				value = n;
 
@@ -815,8 +839,11 @@ rndis_bind(struct usb_configuration *c, struct usb_function *f)
 	 * with list_for_each_entry, so we assume no race condition
 	 * with regard to rndis_opts->bound access
 	 */
+<<<<<<< HEAD
 
 	/* if (!rndis_opts->bound) { */
+=======
+>>>>>>> f8c5db8... usb: gadget: fix mtk support
 	if (rndis_opts && !rndis_opts->bound) {
 		gether_set_gadget(rndis_opts->net, cdev->gadget);
 		status = gether_register_netdev(rndis_opts->net);

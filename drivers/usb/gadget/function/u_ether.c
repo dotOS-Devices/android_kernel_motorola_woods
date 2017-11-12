@@ -82,9 +82,13 @@ struct eth_dev {
 	unsigned		ul_max_pkts_per_xfer;
 	unsigned		dl_max_pkts_per_xfer;
 <<<<<<< HEAD
+<<<<<<< HEAD
 	uint32_t		dl_max_xfer_size;
 =======
 >>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
+=======
+	uint32_t		dl_max_xfer_size;
+>>>>>>> f8c5db8... usb: gadget: fix mtk support
 	struct sk_buff		*(*wrap)(struct gether *, struct sk_buff *skb);
 	int			(*unwrap)(struct gether *,
 						struct sk_buff *skb,
@@ -1028,6 +1032,7 @@ static netdev_tx_t eth_start_xmit(struct sk_buff *skb,
 
 		spin_lock_irqsave(&dev->req_lock, flags);
 <<<<<<< HEAD
+<<<<<<< HEAD
 		dev->tx_skb_hold_count++;
 		/* if (dev->tx_skb_hold_count < dev->dl_max_pkts_per_xfer) { */
 		if ((dev->tx_skb_hold_count < dev->dl_max_pkts_per_xfer)
@@ -1036,6 +1041,10 @@ static netdev_tx_t eth_start_xmit(struct sk_buff *skb,
 =======
 		if (dev->tx_skb_hold_count < dev->dl_max_pkts_per_xfer) {
 >>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
+=======
+		if ((dev->tx_skb_hold_count < dev->dl_max_pkts_per_xfer)
+				&& (length < (dev->dl_max_xfer_size - dev->net->mtu))) {
+>>>>>>> f8c5db8... usb: gadget: fix mtk support
 			if (dev->no_tx_req_used > TX_REQ_THRESHOLD) {
 				list_add(&req->list, &dev->tx_reqs);
 				spin_unlock_irqrestore(&dev->req_lock, flags);
@@ -1652,9 +1661,13 @@ struct net_device *gether_connect(struct gether *link)
 		dev->ul_max_pkts_per_xfer = link->ul_max_pkts_per_xfer;
 		dev->dl_max_pkts_per_xfer = link->dl_max_pkts_per_xfer;
 <<<<<<< HEAD
+<<<<<<< HEAD
 		dev->dl_max_xfer_size = link->dl_max_transfer_len;
 =======
 >>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
+=======
+		dev->dl_max_xfer_size = link->dl_max_transfer_len;
+>>>>>>> f8c5db8... usb: gadget: fix mtk support
 
 		spin_lock(&dev->lock);
 		dev->tx_skb_hold_count = 0;
