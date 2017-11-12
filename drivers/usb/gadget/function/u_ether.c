@@ -50,7 +50,10 @@
 #define UETH__VERSION	"29-May-2008"
 
 static struct workqueue_struct	*uether_wq;
+<<<<<<< HEAD
 static struct workqueue_struct	*uether_wq1;
+=======
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 
 struct eth_dev {
 	/* lock is held while accessing port_usb
@@ -78,7 +81,10 @@ struct eth_dev {
 	unsigned		header_len;
 	unsigned		ul_max_pkts_per_xfer;
 	unsigned		dl_max_pkts_per_xfer;
+<<<<<<< HEAD
 	uint32_t		dl_max_xfer_size;
+=======
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 	struct sk_buff		*(*wrap)(struct gether *, struct sk_buff *skb);
 	int			(*unwrap)(struct gether *,
 						struct sk_buff *skb,
@@ -86,7 +92,10 @@ struct eth_dev {
 
 	struct work_struct	work;
 	struct work_struct	rx_work;
+<<<<<<< HEAD
 	struct work_struct	rx_work1;
+=======
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 
 	unsigned long		todo;
 #define	WORK_RX_MEMORY		0
@@ -269,8 +278,12 @@ rx_submit(struct eth_dev *dev, struct usb_request *req, gfp_t gfp_flags)
 	if (dev->port_usb->is_fixed)
 		size = max_t(size_t, size, dev->port_usb->fixed_out_len);
 
+<<<<<<< HEAD
 	U_ETHER_DBG("size:%d, mtu:%d, hdr_len:%d, maxpacket:%d, ul_max_pkts_per_xfer:%d",
 			(int)size, dev->net->mtu, dev->port_usb->header_len, out->maxpacket, dev->ul_max_pkts_per_xfer);
+=======
+	DBG(dev, "%s: size: %zd\n", __func__, size);
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 	skb = alloc_skb(size + NET_IP_ALIGN, gfp_flags);
 	if (skb == NULL) {
 		U_ETHER_DBG("no rx skb\n");
@@ -337,7 +350,10 @@ static void rx_complete(struct usb_ep *ep, struct usb_request *req)
 
 		if (!status)
 			queue = 1;
+<<<<<<< HEAD
 		rndis_test_rx_usb_in++;
+=======
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 		break;
 
 	/* software-driven interface shutdown */
@@ -368,6 +384,7 @@ quiesce:
 	}
 
 clean:
+<<<<<<< HEAD
 	spin_lock(&dev->reqrx_lock);
 	list_add(&req->list, &dev->rx_reqs);
 	spin_unlock(&dev->reqrx_lock);
@@ -376,6 +393,14 @@ clean:
 		queue_work(uether_wq, &dev->rx_work);
 		queue_work(uether_wq1, &dev->rx_work1);
 	}
+=======
+	spin_lock(&dev->req_lock);
+	list_add(&req->list, &dev->rx_reqs);
+	spin_unlock(&dev->req_lock);
+
+	if (queue)
+		queue_work(uether_wq, &dev->rx_work);
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 }
 
 static int prealloc(struct list_head *list, struct usb_ep *ep, unsigned n)
@@ -473,9 +498,15 @@ static void rx_fill(struct eth_dev *dev, gfp_t gfp_flags)
 		spin_unlock_irqrestore(&dev->reqrx_lock, flags);
 
 		if (rx_submit(dev, req, gfp_flags) < 0) {
+<<<<<<< HEAD
 			spin_lock_irqsave(&dev->reqrx_lock, flags);
 			list_add(&req->list, &dev->rx_reqs);
 			spin_unlock_irqrestore(&dev->reqrx_lock, flags);
+=======
+			spin_lock_irqsave(&dev->req_lock, flags);
+			list_add(&req->list, &dev->rx_reqs);
+			spin_unlock_irqrestore(&dev->req_lock, flags);
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 			defer_kevent(dev, WORK_RX_MEMORY);
 			return;
 		}
@@ -523,6 +554,36 @@ static void process_rx_w(struct work_struct *work)
 #endif
 }
 
+static void process_rx_w(struct work_struct *work)
+{
+	struct eth_dev	*dev = container_of(work, struct eth_dev, rx_work);
+	struct sk_buff	*skb;
+	int		status = 0;
+
+	if (!dev->port_usb)
+		return;
+
+	while ((skb = skb_dequeue(&dev->rx_frames))) {
+		if (status < 0
+				|| ETH_HLEN > skb->len
+				|| skb->len > ETH_FRAME_LEN) {
+			dev->net->stats.rx_errors++;
+			dev->net->stats.rx_length_errors++;
+			DBG(dev, "rx length %d\n", skb->len);
+			dev_kfree_skb_any(skb);
+			continue;
+		}
+		skb->protocol = eth_type_trans(skb, dev->net);
+		dev->net->stats.rx_packets++;
+		dev->net->stats.rx_bytes += skb->len;
+
+		status = netif_rx_ni(skb);
+	}
+
+	if (netif_running(dev->net))
+		rx_fill(dev, GFP_KERNEL);
+}
+
 static void eth_work(struct work_struct *work)
 {
 	struct eth_dev	*dev = container_of(work, struct eth_dev, work);
@@ -549,13 +610,20 @@ static void process_rx_w1(struct work_struct *work)
 
 static void tx_complete(struct usb_ep *ep, struct usb_request *req)
 {
+<<<<<<< HEAD
 	struct sk_buff	*skb;
 	struct eth_dev	*dev;
 	struct net_device *net;
+=======
+	struct sk_buff	*skb = req->context;
+	struct eth_dev	*dev = ep->driver_data;
+	struct net_device *net = dev->net;
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 	struct usb_request *new_req;
 	struct usb_ep *in;
 	int length;
 	int retval;
+<<<<<<< HEAD
 
 	if (!ep->driver_data) {
 		usb_ep_free_request(ep, req);
@@ -569,6 +637,8 @@ static void tx_complete(struct usb_ep *ep, struct usb_request *req)
 		usb_ep_free_request(ep, req);
 		return;
 	}
+=======
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 
 	switch (req->status) {
 	default:
@@ -589,6 +659,7 @@ static void tx_complete(struct usb_ep *ep, struct usb_request *req)
 
 	spin_lock(&dev->req_lock);
 	list_add_tail(&req->list, &dev->tx_reqs);
+<<<<<<< HEAD
 
 	if (dev->port_usb->multi_pkt_xfer && !req->context) {
 		dev->no_tx_req_used--;
@@ -677,6 +748,69 @@ static void tx_complete(struct usb_ep *ep, struct usb_request *req)
 			netif_wake_queue(dev->net);
 		spin_unlock(&dev->req_lock);
 	}
+=======
+
+	if (dev->port_usb->multi_pkt_xfer) {
+		dev->no_tx_req_used--;
+		req->length = 0;
+		in = dev->port_usb->in_ep;
+
+		if (!list_empty(&dev->tx_reqs)) {
+			new_req = container_of(dev->tx_reqs.next,
+					struct usb_request, list);
+			list_del(&new_req->list);
+			spin_unlock(&dev->req_lock);
+			if (new_req->length > 0) {
+				length = new_req->length;
+
+				/* NCM requires no zlp if transfer is
+				 * dwNtbInMaxSize */
+				if (dev->port_usb->is_fixed &&
+					length == dev->port_usb->fixed_in_len &&
+					(length % in->maxpacket) == 0)
+					new_req->zero = 0;
+				else
+					new_req->zero = 1;
+
+				/* use zlp framing on tx for strict CDC-Ether
+				 * conformance, though any robust network rx
+				 * path ignores extra padding. and some hardware
+				 * doesn't like to write zlps.
+				 */
+				if (new_req->zero && !dev->zlp &&
+						(length % in->maxpacket) == 0) {
+					new_req->zero = 0;
+					length++;
+				}
+
+				new_req->length = length;
+				retval = usb_ep_queue(in, new_req, GFP_ATOMIC);
+				switch (retval) {
+				default:
+					DBG(dev, "tx queue err %d\n", retval);
+					break;
+				case 0:
+					spin_lock(&dev->req_lock);
+					dev->no_tx_req_used++;
+					spin_unlock(&dev->req_lock);
+					net->trans_start = jiffies;
+				}
+			} else {
+				spin_lock(&dev->req_lock);
+				list_add(&new_req->list, &dev->tx_reqs);
+				spin_unlock(&dev->req_lock);
+			}
+		} else {
+			spin_unlock(&dev->req_lock);
+		}
+	} else {
+		spin_unlock(&dev->req_lock);
+		dev_kfree_skb_any(skb);
+	}
+
+	if (netif_carrier_ok(dev->net))
+		netif_wake_queue(dev->net);
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 }
 
 static inline int is_promisc(u16 cdc_filter)
@@ -684,7 +818,11 @@ static inline int is_promisc(u16 cdc_filter)
 	return cdc_filter & USB_CDC_PACKET_TYPE_PROMISCUOUS;
 }
 
+<<<<<<< HEAD
 static int alloc_tx_buffer(struct eth_dev *dev)
+=======
+static void alloc_tx_buffer(struct eth_dev *dev)
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 {
 	struct list_head	*act;
 	struct usb_request	*req;
@@ -698,6 +836,7 @@ static int alloc_tx_buffer(struct eth_dev *dev)
 
 	list_for_each(act, &dev->tx_reqs) {
 		req = container_of(act, struct usb_request, list);
+<<<<<<< HEAD
 		if (!req->buf) {
 #if defined(CONFIG_64BIT) && defined(CONFIG_MTK_LM_MODE)
 			req->buf = kzalloc(dev->tx_req_bufsize,
@@ -723,6 +862,12 @@ free_buf:
 		req->buf = NULL;
 	}
 	return -ENOMEM;
+=======
+		if (!req->buf)
+			req->buf = kmalloc(dev->tx_req_bufsize,
+						GFP_ATOMIC);
+	}
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 }
 
 static netdev_tx_t eth_start_xmit(struct sk_buff *skb,
@@ -755,6 +900,12 @@ static netdev_tx_t eth_start_xmit(struct sk_buff *skb,
 		return NETDEV_TX_OK;
 	}
 
+<<<<<<< HEAD
+=======
+	/* Allocate memory for tx_reqs to support multi packet transfer */
+	if (dev->port_usb->multi_pkt_xfer && !dev->tx_req_bufsize)
+		alloc_tx_buffer(dev);
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 
 	/* apply outgoing CDC or RNDIS filters */
 	if (skb && !is_promisc(cdc_filter)) {
@@ -848,6 +999,7 @@ static netdev_tx_t eth_start_xmit(struct sk_buff *skb,
 		return NETDEV_TX_OK;
 	}
 
+<<<<<<< HEAD
 	if (multi_pkt_xfer) {
 		pr_debug("req->length:%d header_len:%u\n"
 				"skb->len:%d skb->data_len:%d\n",
@@ -862,15 +1014,28 @@ static netdev_tx_t eth_start_xmit(struct sk_buff *skb,
 		memcpy(req->buf + req->length, skb->data, skb->len);
 		/* Increment req length by skb data length */
 		req->length += skb->len;
+=======
+	spin_lock_irqsave(&dev->req_lock, flags);
+	dev->tx_skb_hold_count++;
+	spin_unlock_irqrestore(&dev->req_lock, flags);
+
+	if (dev->port_usb->multi_pkt_xfer) {
+		memcpy(req->buf + req->length, skb->data, skb->len);
+		req->length = req->length + skb->len;
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 		length = req->length;
 		dev_kfree_skb_any(skb);
 
 		spin_lock_irqsave(&dev->req_lock, flags);
+<<<<<<< HEAD
 		dev->tx_skb_hold_count++;
 		/* if (dev->tx_skb_hold_count < dev->dl_max_pkts_per_xfer) { */
 		if ((dev->tx_skb_hold_count < dev->dl_max_pkts_per_xfer)
 				&& (length < (max_size - dev->net->mtu))) {
 
+=======
+		if (dev->tx_skb_hold_count < dev->dl_max_pkts_per_xfer) {
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 			if (dev->no_tx_req_used > TX_REQ_THRESHOLD) {
 				list_add(&req->list, &dev->tx_reqs);
 				spin_unlock_irqrestore(&dev->req_lock, flags);
@@ -879,14 +1044,27 @@ static netdev_tx_t eth_start_xmit(struct sk_buff *skb,
 		}
 
 		dev->no_tx_req_used++;
+<<<<<<< HEAD
 		dev->tx_skb_hold_count = 0;
 		spin_unlock_irqrestore(&dev->req_lock, flags);
 
+=======
+		spin_unlock_irqrestore(&dev->req_lock, flags);
+
+		spin_lock_irqsave(&dev->lock, flags);
+		dev->tx_skb_hold_count = 0;
+		spin_unlock_irqrestore(&dev->lock, flags);
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 	} else {
 		length = skb->len;
 		req->buf = skb->data;
 		req->context = skb;
 	}
+<<<<<<< HEAD
+=======
+
+	req->complete = tx_complete;
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 
 	/* NCM requires no zlp if transfer is dwNtbInMaxSize */
 	if (dev->port_usb->is_fixed &&
@@ -933,10 +1111,16 @@ static netdev_tx_t eth_start_xmit(struct sk_buff *skb,
 	}
 
 	if (retval) {
+<<<<<<< HEAD
 		if (!multi_pkt_xfer)
 			dev_kfree_skb_any(skb);
 		else
 			req->length = 0;
+=======
+		if (!dev->port_usb->multi_pkt_xfer)
+			dev_kfree_skb_any(skb);
+drop:
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 		dev->net->stats.tx_dropped++;
 		spin_lock_irqsave(&dev->req_lock, flags);
 		if (list_empty(&dev->tx_reqs))
@@ -1031,6 +1215,10 @@ static int eth_stop(struct net_device *net)
 
 /*-------------------------------------------------------------------------*/
 
+<<<<<<< HEAD
+=======
+static u8 host_ethaddr[ETH_ALEN];
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 
 static int get_ether_addr(const char *str, u8 *dev_addr)
 {
@@ -1078,6 +1266,17 @@ static int get_host_ether_addr(u8 *str, u8 *dev_addr)
 }
 #endif
 
+static int get_host_ether_addr(u8 *str, u8 *dev_addr)
+{
+	memcpy(dev_addr, str, ETH_ALEN);
+	if (is_valid_ether_addr(dev_addr))
+		return 0;
+
+	random_ether_addr(dev_addr);
+	memcpy(str, dev_addr, ETH_ALEN);
+	return 1;
+}
+
 static const struct net_device_ops eth_netdev_ops = {
 	.ndo_open		= eth_open,
 	.ndo_stop		= eth_stop,
@@ -1123,7 +1322,10 @@ struct eth_dev *gether_setup_name(struct usb_gadget *g,
 	spin_lock_init(&dev->reqrx_lock);
 	INIT_WORK(&dev->work, eth_work);
 	INIT_WORK(&dev->rx_work, process_rx_w);
+<<<<<<< HEAD
 	INIT_WORK(&dev->rx_work1, process_rx_w1);
+=======
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 	INIT_LIST_HEAD(&dev->tx_reqs);
 	INIT_LIST_HEAD(&dev->rx_reqs);
 
@@ -1138,9 +1340,16 @@ struct eth_dev *gether_setup_name(struct usb_gadget *g,
 		dev_warn(&g->dev,
 			"using random %s ethernet address\n", "self");
 
+<<<<<<< HEAD
 	if (get_ether_addr(host_addr, dev->host_mac))
 		dev_warn(&g->dev,
 			"using random %s ethernet address\n", "host");
+=======
+	if (get_host_ether_addr(host_ethaddr, dev->host_mac))
+		dev_warn(&g->dev, "using random %s ethernet address\n", "host");
+	else
+		dev_warn(&g->dev, "using previous %s ethernet address\n", "host");
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 
 	if (ethaddr)
 		memcpy(ethaddr, dev->host_mac, ETH_ALEN);
@@ -1442,7 +1651,10 @@ struct net_device *gether_connect(struct gether *link)
 		dev->wrap = link->wrap;
 		dev->ul_max_pkts_per_xfer = link->ul_max_pkts_per_xfer;
 		dev->dl_max_pkts_per_xfer = link->dl_max_pkts_per_xfer;
+<<<<<<< HEAD
 		dev->dl_max_xfer_size = link->dl_max_transfer_len;
+=======
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 
 		spin_lock(&dev->lock);
 		dev->tx_skb_hold_count = 0;
@@ -1530,10 +1742,15 @@ void gether_disconnect(struct gether *link)
 		list_del(&req->list);
 
 		spin_unlock(&dev->req_lock);
+<<<<<<< HEAD
 		if (link->multi_pkt_xfer) {
 			kfree(req->buf);
 			req->buf = NULL;
 		}
+=======
+		if (link->multi_pkt_xfer)
+			kfree(req->buf);
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 		usb_ep_free_request(link->in_ep, req);
 		spin_lock(&dev->req_lock);
 	}
@@ -1554,7 +1771,11 @@ void gether_disconnect(struct gether *link)
 		usb_ep_free_request(link->out_ep, req);
 		spin_lock(&dev->reqrx_lock);
 	}
+<<<<<<< HEAD
 	spin_unlock(&dev->reqrx_lock);
+=======
+	spin_unlock(&dev->req_lock);
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 
 	spin_lock(&dev->rx_frames.lock);
 	while ((skb = __skb_dequeue(&dev->rx_frames)))
@@ -1582,12 +1803,15 @@ static int __init gether_init(void)
 		pr_err("%s: Unable to create workqueue: uether\n", __func__);
 		return -ENOMEM;
 	}
+<<<<<<< HEAD
 	uether_wq1  = create_singlethread_workqueue("uether_rx1");
 	if (!uether_wq1) {
 		destroy_workqueue(uether_wq);
 		pr_err("%s: Unable to create workqueue: uether\n", __func__);
 		return -ENOMEM;
 	}
+=======
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 	return 0;
 }
 module_init(gether_init);
@@ -1595,7 +1819,10 @@ module_init(gether_init);
 static void __exit gether_exit(void)
 {
 	destroy_workqueue(uether_wq);
+<<<<<<< HEAD
 	destroy_workqueue(uether_wq1);
+=======
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 
 }
 module_exit(gether_exit);

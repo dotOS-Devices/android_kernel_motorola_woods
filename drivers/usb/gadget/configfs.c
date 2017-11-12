@@ -130,28 +130,21 @@ struct gadget_config_name {
 	struct list_head list;
 };
 
-#define MAX_USB_STRING_LEN	126
-#define MAX_USB_STRING_WITH_NULL_LEN	(MAX_USB_STRING_LEN+1)
-
 static int usb_string_copy(const char *s, char **s_copy)
 {
 	int ret;
 	char *str;
 	char *copy = *s_copy;
 	ret = strlen(s);
-	if (ret > MAX_USB_STRING_LEN)
+	if (ret > 126)
 		return -EOVERFLOW;
 
-	if (copy) {
-		str = copy;
-	} else {
-		str = kmalloc(MAX_USB_STRING_WITH_NULL_LEN, GFP_KERNEL);
-		if (!str)
-			return -ENOMEM;
-	}
-	strncpy(str, s, MAX_USB_STRING_WITH_NULL_LEN);
+	str = kstrdup(s, GFP_KERNEL);
+	if (!str)
+		return -ENOMEM;
 	if (str[ret - 1] == '\n')
 		str[ret - 1] = '\0';
+	kfree(copy);
 	*s_copy = str;
 	return 0;
 }
@@ -1204,7 +1197,10 @@ static ssize_t interf_grp_compatible_id_store(struct usb_os_desc *desc,
 	if (desc->opts_mutex)
 		mutex_lock(desc->opts_mutex);
 	memcpy(desc->ext_compat_id, page, l);
+<<<<<<< HEAD
 	desc->ext_compat_id[l] = '\0';
+=======
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 
 	if (desc->opts_mutex)
 		mutex_unlock(desc->opts_mutex);
@@ -1235,7 +1231,10 @@ static ssize_t interf_grp_sub_compatible_id_store(struct usb_os_desc *desc,
 	if (desc->opts_mutex)
 		mutex_lock(desc->opts_mutex);
 	memcpy(desc->ext_compat_id + 8, page, l);
+<<<<<<< HEAD
 	desc->ext_compat_id[l + 8] = '\0';
+=======
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 
 	if (desc->opts_mutex)
 		mutex_unlock(desc->opts_mutex);
@@ -1809,7 +1808,13 @@ void unregister_gadget_item(struct config_item *item)
 {
 	struct gadget_info *gi = to_gadget_info(item);
 
+<<<<<<< HEAD
 	unregister_gadget(gi);
+=======
+	mutex_lock(&gi->lock);
+	unregister_gadget(gi);
+	mutex_unlock(&gi->lock);
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 }
 EXPORT_SYMBOL_GPL(unregister_gadget_item);
 

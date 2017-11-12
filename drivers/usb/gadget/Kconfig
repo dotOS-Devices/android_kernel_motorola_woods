@@ -401,6 +401,10 @@ config USB_CONFIGFS_F_ACC
 config USB_CONFIGFS_F_AUDIO_SRC
 	boolean "Audio Source gadget"
 	depends on USB_CONFIGFS && USB_CONFIGFS_F_ACC
+<<<<<<< HEAD
+=======
+	depends on SND_PCM
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 	select USB_F_AUDIO_SRC
 	help
 	  USB gadget Audio Source support

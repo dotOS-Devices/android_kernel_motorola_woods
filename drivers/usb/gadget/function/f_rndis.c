@@ -75,17 +75,24 @@ module_param(rndis_dl_max_pkt_per_xfer, uint, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(rndis_dl_max_pkt_per_xfer,
 	"Maximum packets per transfer for DL aggregation");
 
+<<<<<<< HEAD
 static unsigned int rndis_ul_max_pkt_per_xfer = 1;
+=======
+static unsigned int rndis_ul_max_pkt_per_xfer = 3;
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 module_param(rndis_ul_max_pkt_per_xfer, uint, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(rndis_ul_max_pkt_per_xfer,
        "Maximum packets per transfer for UL aggregation");
 
+<<<<<<< HEAD
 static unsigned int f_rndis_debug;
 module_param(f_rndis_debug, uint, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(f_rndis_debug,
 		"f_rndis debug flag");
 #define F_RNDIS_DBG(fmt, args...) pr_debug("F_RNDIS,%s, " fmt, __func__, ## args)
 
+=======
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 struct f_rndis {
 	struct gether			port;
 	u8				ctrl_id, data_id;
@@ -496,11 +503,14 @@ static void rndis_command_complete(struct usb_ep *ep, struct usb_request *req)
 	struct usb_composite_dev	*cdev;
 	int				status;
 	rndis_init_msg_type		*buf;
+<<<<<<< HEAD
 
 	if (!rndis->port.func.config || !rndis->port.func.config->cdev)
 		return;
 
 	cdev = rndis->port.func.config->cdev;
+=======
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 
 	/* received RNDIS command from USB_CDC_SEND_ENCAPSULATED_COMMAND */
 //	spin_lock(&dev->lock);
@@ -512,12 +522,18 @@ static void rndis_command_complete(struct usb_ep *ep, struct usb_request *req)
 	buf = (rndis_init_msg_type *)req->buf;
 
 	if (buf->MessageType == RNDIS_MSG_INIT) {
+<<<<<<< HEAD
 		if (buf->MaxTransferSize > 2048) {
 			rndis->port.multi_pkt_xfer = 1;
 			rndis->port.dl_max_transfer_len = buf->MaxTransferSize;
 			gether_update_dl_max_xfer_size(&rndis->port,
 					rndis->port.dl_max_transfer_len);
 		} else
+=======
+		if (buf->MaxTransferSize > 2048)
+			rndis->port.multi_pkt_xfer = 1;
+		else
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 			rndis->port.multi_pkt_xfer = 0;
 		pr_info("%s: MaxTransferSize: %d : Multi_pkt_txr: %s\n",
 				__func__, buf->MaxTransferSize,

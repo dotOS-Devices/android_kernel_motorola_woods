@@ -745,12 +745,18 @@ static int rndis_reset_response(int configNr, rndis_reset_msg_type *buf)
 	u32 length;
 	u8 *xbuf;
 
+<<<<<<< HEAD
 	RNDIS_DBG("reset, clean old response\n");
 	/* drain the response queue */
 	while ((xbuf = rndis_get_next_response(configNr, &length)))
 		rndis_free_response(configNr, xbuf);
 
 	rndis_test_reset_msg_cnt++;
+=======
+	/* drain the response queue */
+	while ((xbuf = rndis_get_next_response(configNr, &length)))
+		rndis_free_response(configNr, xbuf);
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 
 	r = rndis_add_response(configNr, sizeof(rndis_reset_cmplt_type));
 	if (!r)
@@ -1152,6 +1158,7 @@ int rndis_rm_hdr(struct gether *port,
 		}
 
 		if (skb->len < sizeof *hdr) {
+<<<<<<< HEAD
 			pr_err("invalid rndis pkt: skblen:%u hdr_len:%u",
 					(unsigned int)(skb->len), (unsigned int)sizeof(*hdr));
 			dev_kfree_skb_any(skb);
@@ -1181,6 +1188,37 @@ int rndis_rm_hdr(struct gether *port,
 
 		skb_pull(skb, data_offset + 8);
 
+=======
+			pr_err("invalid rndis pkt: skblen:%u hdr_len:%zu",
+					skb->len, sizeof *hdr);
+			dev_kfree_skb_any(skb);
+			return -EINVAL;
+		}
+
+		hdr = (void *)skb->data;
+		msg_len = le32_to_cpu(hdr->MessageLength);
+		data_offset = le32_to_cpu(hdr->DataOffset);
+		data_len = le32_to_cpu(hdr->DataLength);
+
+		if (skb->len < msg_len ||
+				((data_offset + data_len + 8) > msg_len)) {
+			pr_err("invalid rndis message: %d/%d/%d/%d, len:%d\n",
+					le32_to_cpu(hdr->MessageType),
+					msg_len, data_offset, data_len, skb->len);
+			dev_kfree_skb_any(skb);
+			return -EOVERFLOW;
+		}
+		if (le32_to_cpu(hdr->MessageType) != RNDIS_MSG_PACKET) {
+			pr_err("invalid rndis message: %d/%d/%d/%d, len:%d\n",
+					le32_to_cpu(hdr->MessageType),
+					msg_len, data_offset, data_len, skb->len);
+			dev_kfree_skb_any(skb);
+			return -EINVAL;
+		}
+
+		skb_pull(skb, data_offset + 8);
+
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 		if (msg_len == skb->len) {
 			skb_trim(skb, data_len);
 			break;

@@ -77,7 +77,10 @@ struct gether {
 	u32				fixed_in_len;
 	unsigned		ul_max_pkts_per_xfer;
 	unsigned		dl_max_pkts_per_xfer;
+<<<<<<< HEAD
 	unsigned		dl_max_transfer_len;
+=======
+>>>>>>> 53f2e34... usb: gadget: upstream to 3.18 common
 	bool				multi_pkt_xfer;
 	bool				supports_multi_frame;
 	struct sk_buff			*(*wrap)(struct gether *port,
