@@ -1,6 +1,10 @@
 VERSION = 3
 PATCHLEVEL = 18
+<<<<<<< HEAD
 SUBLEVEL = 35
+=======
+SUBLEVEL = 81
+>>>>>>> 37cdf96... Linux 3.18.81
 EXTRAVERSION =
 NAME = Shuffling Zombie Juror
 
