@@ -3544,8 +3544,6 @@ void *__kmalloc_node(size_t size, gfp_t flags, int node)
 EXPORT_SYMBOL(__kmalloc_node);
 #endif
 
-<<<<<<< HEAD
-=======
 #ifdef CONFIG_HARDENED_USERCOPY
 /*
  * Rejects objects that are incorrectly sized.
@@ -3588,7 +3586,7 @@ const char *__check_heap_object(const void *ptr, unsigned long n,
 }
 #endif /* CONFIG_HARDENED_USERCOPY */
 
->>>>>>> 63c02d6... slub: check cookies in __check_heap_object
+ check cookies in __check_heap_object
 size_t ksize(const void *object)
 {
 	struct page *page;
