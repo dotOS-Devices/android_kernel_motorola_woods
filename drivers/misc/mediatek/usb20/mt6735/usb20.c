@@ -763,7 +763,6 @@ bool usb_cable_connected(void)
 	if (cable_mode == CABLE_MODE_CHRG_ONLY || (cable_mode == CABLE_MODE_HOST_ONLY && chg_type != CHARGING_HOST))
 		connected = false;
 
->>>>>>> fb4e5a3... mediatek: usb20: update
 	/* one time job, set_usb_rdy, issue connect_rescue_work */
 	if (is_usb_rdy() == KAL_FALSE && mtk_musb->is_ready) {
 		static struct delayed_work connect_rescue_work;

@@ -560,7 +560,7 @@ static void musb_id_pin_work(struct work_struct *data)
 		goto out;
 	}
 
-<<<<<<< HEAD
+
 	if (host_plug_test_triggered) {
 		/* flip */
 		if (mtk_musb->is_host)
@@ -569,14 +569,13 @@ static void musb_id_pin_work(struct work_struct *data)
 			mtk_musb->is_host = true;
 	} else
 		mtk_musb->is_host = musb_is_host();
-=======
+
 	/* flip */
 	if (host_plug_test_triggered)
 		mtk_musb->is_host = !mtk_musb->is_host;
 	else
 		mtk_musb->is_host = musb_is_host();
 
->>>>>>> fb4e5a3... mediatek: usb20: update
 	DBG(0, "musb is as %s\n", mtk_musb->is_host?"host":"device");
 	switch_set_state((struct switch_dev *)&otg_state, mtk_musb->is_host);
 
@@ -620,11 +619,11 @@ static void musb_id_pin_work(struct work_struct *data)
 		switch_int_to_device(mtk_musb);
 
 		if (host_plug_test_enable && !host_plug_test_triggered)
-<<<<<<< HEAD
+
 			queue_delayed_work(host_plug_test_wq, &host_plug_test_work, 0);
-=======
+
 			queue_delayed_work(mtk_musb->st_wq, &host_plug_test_work, 0);
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 	} else {
 		/* for device no disconnect interrupt */
 		spin_lock_irqsave(&mtk_musb->lock, flags);
@@ -762,10 +761,9 @@ void mt_usb_otg_init(struct musb *musb)
 	}
 
 	/* test */
-<<<<<<< HEAD
 	host_plug_test_wq = create_singlethread_workqueue("host_plug_test_wq");
-=======
->>>>>>> fb4e5a3... mediatek: usb20: update
+
+
 	INIT_DELAYED_WORK(&host_plug_test_work, do_host_plug_test_work);
 
 #ifdef CONFIG_OF

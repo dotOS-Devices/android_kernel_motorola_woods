@@ -2805,7 +2805,7 @@ static int musb_urb_dequeue(struct usb_hcd *hcd, struct urb *urb, int status)
 		 */
 		if (ready && list_empty(&qh->hep->urb_list)) {
 #ifdef MUSB_QMU_SUPPORT_HOST
-<<<<<<< HEAD
+
 			if (qh->is_use_qmu)
 				mtk_disable_q(musb, qh->hw_ep->epnum, is_in);
 #endif
@@ -2830,7 +2830,7 @@ static int musb_urb_dequeue(struct usb_hcd *hcd, struct urb *urb, int status)
 			qh->hep->hcpriv = NULL;
 			list_del(&qh->ring);
 
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 			kfree(qh);
 		}
 	} else {
@@ -2875,7 +2875,7 @@ static void musb_h_disable(struct usb_hcd *hcd, struct usb_host_endpoint *hep)
 		else
 			qh = hw_ep->out_qh;
 
-<<<<<<< HEAD
+
 		if (qh == NULL)
 			goto exit;
 
@@ -2919,7 +2919,7 @@ static void musb_h_disable(struct usb_hcd *hcd, struct usb_host_endpoint *hep)
 	if (qh->is_use_qmu)
 		mtk_disable_q(musb, qh->hw_ep->epnum, is_in);
 #endif
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 
 	/* NOTE: qh is invalid unless !list_empty(&hep->urb_list) */
 

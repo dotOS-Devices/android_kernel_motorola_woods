@@ -1119,10 +1119,9 @@ void h_qmu_done_tx(struct musb *musb, u8 ep_num)
 	urb = next_urb(qh);
 	if (unlikely(!urb)) {
 		DBG(0, "hw_ep:%d, !URB\n", ep_num);
-<<<<<<< HEAD
-=======
+
 		musb_advance_schedule(musb, (struct urb *)QH_FREE_RESCUE_INTERRUPT, hw_ep, USB_DIR_OUT);
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 		return;
 	}
 
@@ -1213,11 +1212,11 @@ void mtk_qmu_host_rx_err(struct musb *musb, u8 epnum)
 	u16 rx_csr, val;
 	struct musb_hw_ep *hw_ep = musb->endpoints + epnum;
 	void __iomem *epio = hw_ep->regs;
-<<<<<<< HEAD
+
 	struct musb_qh *qh = hw_ep->out_qh;
-=======
+
 	struct musb_qh *qh = hw_ep->in_qh;
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 	bool done = false;
 	u32 status = 0;
 	void __iomem *mbase = musb->mregs;
@@ -1282,16 +1281,16 @@ void mtk_qmu_host_rx_err(struct musb *musb, u8 epnum)
 		done = true;
 	}
 
-<<<<<<< HEAD
+
 	if (done) {
 		if (urb->status == -EINPROGRESS)
 			urb->status = status;
 		musb_advance_schedule(musb, urb, hw_ep, USB_DIR_IN);
 	}
-=======
+
 	if (done)
 		DBG(0, "FIXME!!!, to be implemented, related HW/SW abort procedure\n");
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 
 finished:
 	{
@@ -1301,10 +1300,10 @@ finished:
 		sprintf(string, "USB20_HOST, RXQ<%d> ERR, CSR:%x", epnum, val);
 		QMU_ERR("%s\n", string);
 #ifdef CONFIG_MEDIATEK_SOLUTION
-<<<<<<< HEAD
+
 		/* aee_kernel_warning(string, string); */
 		QMU_ERR("SKIP aee_kernel_warning\n");
-=======
+
 		{
 			u16 skip_val;
 
@@ -1325,7 +1324,7 @@ finished:
 			if (val && !skip_val)
 				aee_kernel_warning(string, string);
 		}
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 #endif
 	}
 }
@@ -1413,17 +1412,17 @@ void mtk_qmu_host_tx_err(struct musb *musb, u8 epnum)
 			status = urb->status;
 	}
 
-<<<<<<< HEAD
+
 	if (done) {
 		/* set status */
 		urb->status = status;
 		urb->actual_length = qh->offset;
 		musb_advance_schedule(musb, urb, hw_ep, USB_DIR_OUT);
 	}
-=======
+
 	if (done)
 		DBG(0, "FIXME!!!, to be implemented, related HW/SW abort procedure\n");
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 
 finished:
 	{
@@ -1433,12 +1432,12 @@ finished:
 		sprintf(string, "USB20_HOST, TXQ<%d> ERR, CSR:%x", epnum, val);
 		QMU_ERR("%s\n", string);
 #ifdef CONFIG_MEDIATEK_SOLUTION
-<<<<<<< HEAD
+
 		/* aee_kernel_warning(string, string); */
 		QMU_ERR("SKIP aee_kernel_warning\n");
-=======
+
 		aee_kernel_warning(string, string);
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 #endif
 	}
 

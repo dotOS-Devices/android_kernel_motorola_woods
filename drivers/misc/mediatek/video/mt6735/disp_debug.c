@@ -1303,9 +1303,9 @@ static ssize_t layer_debug_write(struct file *file,
 {
 	MTKFB_LAYER_DBG_OPTIONS *dbgopt =
 	    (MTKFB_LAYER_DBG_OPTIONS *) file->private_data;
-=======
+
 unsigned int gDumpMemoutCmdq = 0;
->>>>>>> af3b0d1... mediatek: video: remove debug code
+
 
 unsigned int gEnableReduceRegWrite = 0;
 unsigned int gEnableDSIStateCheck = 0;

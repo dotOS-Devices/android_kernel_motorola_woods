@@ -3586,7 +3586,7 @@ const char *__check_heap_object(const void *ptr, unsigned long n,
 }
 #endif /* CONFIG_HARDENED_USERCOPY */
 
- check cookies in __check_heap_object
+ /*check cookies in __check_heap_object*/
 size_t ksize(const void *object)
 {
 	struct page *page;
