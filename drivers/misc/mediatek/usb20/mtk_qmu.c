@@ -157,13 +157,12 @@ int qmu_init_gpd_pool(struct device *dev)
 	dma_addr_t dma_handle;
 	u32 gpd_sz;
 
-<<<<<<< HEAD
-=======
+
 	#ifdef MUSB_QMU_LIMIT_SUPPORT
 	for (i = 1; i <= MAX_QMU_EP; i++)
 		Rx_gpd_max_count[i] = Tx_gpd_max_count[i] = isoc_ep_gpd_count;
 	#else
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 	if (!mtk_qmu_max_gpd_num)
 		mtk_qmu_max_gpd_num = DFT_MAX_GPD_NUM;
 
@@ -176,11 +175,8 @@ int qmu_init_gpd_pool(struct device *dev)
 		else
 			Rx_gpd_max_count[i] = Tx_gpd_max_count[i] = mtk_qmu_max_gpd_num;
 	}
-<<<<<<< HEAD
 
-=======
 	#endif
->>>>>>> fb4e5a3... mediatek: usb20: update
 	gpd_sz = (u32) (u64) sizeof(TGPD);
 	QMU_INFO("sizeof(TGPD):%d\n", gpd_sz);
 	if (gpd_sz != GPD_SZ)
@@ -952,10 +948,8 @@ void h_qmu_done_rx(struct musb *musb, u8 ep_num)
 	urb = next_urb(qh);
 	if (unlikely(!urb)) {
 		DBG(0, "hw_ep:%d, !URB\n", ep_num);
-<<<<<<< HEAD
-=======
 		musb_advance_schedule(musb, (struct urb *)QH_FREE_RESCUE_INTERRUPT, hw_ep, USB_DIR_IN);
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 		return;
 	}
 	DBG(4, "\n");

@@ -28,10 +28,7 @@
 #define GPD_EXT_LEN (48)	/* GPD_LEN_ALIGNED - 16(should be sizeof(TGPD) */
 #define GPD_SZ (16)
 #define DFT_MAX_GPD_NUM 36
-<<<<<<< HEAD
-=======
 #ifndef MUSB_QMU_LIMIT_SUPPORT
->>>>>>> fb4e5a3... mediatek: usb20: update
 #define RXQ_NUM 8
 #define TXQ_NUM 8
 #else

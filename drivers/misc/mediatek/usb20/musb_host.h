@@ -118,11 +118,10 @@ extern struct musb_qh *musb_ep_get_qh(struct musb_hw_ep *ep, int isRx);
 extern void musb_advance_schedule(struct musb *musb, struct urb *urb,
 				  struct musb_hw_ep *hw_ep, int is_in);
 #endif
-<<<<<<< HEAD
-=======
+
 enum {
 	QH_FREE_RESCUE_INTERRUPT,
 	QH_FREE_RESCUE_EP_DISABLE,
 };
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 #endif				/* _MUSB_HOST_H */

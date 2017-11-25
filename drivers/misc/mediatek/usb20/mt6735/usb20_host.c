@@ -302,7 +302,7 @@ void musb_session_restart(struct musb *musb)
 	DBG(0, "[MUSB] restart session\n");
 }
 
-<<<<<<< HEAD
+
 static struct workqueue_struct *host_plug_test_wq;
 static struct delayed_work host_plug_test_work;
 int host_plug_test_enable; /* default disable */
@@ -313,7 +313,7 @@ int host_plug_out_test_period_ms = 13000;	/* give AEE 13 seconds */
 module_param(host_plug_out_test_period_ms, int, 0644);
 int host_test_vbus_off_time_us = 3000;
 module_param(host_test_vbus_off_time_us, int, 0644);
-=======
+
 static struct delayed_work host_plug_test_work;
 int host_plug_test_enable; /* default disable */
 module_param(host_plug_test_enable, int, 0644);
@@ -325,7 +325,7 @@ int host_test_vbus_off_time_us = 3000;
 module_param(host_test_vbus_off_time_us, int, 0644);
 int host_test_vbus_only = 1;
 module_param(host_test_vbus_only, int, 0644);
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 static int host_plug_test_triggered;
 void switch_int_to_device(struct musb *musb)
 {
@@ -333,14 +333,13 @@ void switch_int_to_device(struct musb *musb)
 		DBG(1, "directly return\n");
 		return;
 	}
-<<<<<<< HEAD
-=======
+
 
 	if (!usb_iddig_number) {
 		DBG(0, "OTG not inited, directly return\n");
 		return;
 	}
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 #ifdef ID_PIN_USE_EX_EINT
 	irq_set_irq_type(usb_iddig_number, IRQF_TRIGGER_HIGH);
 	enable_irq(usb_iddig_number);
@@ -357,14 +356,13 @@ void switch_int_to_host(struct musb *musb)
 		DBG(1, "directly return\n");
 		return;
 	}
-<<<<<<< HEAD
-=======
+
 
 	if (!usb_iddig_number) {
 		DBG(0, "OTG not inited, directly return\n");
 		return;
 	}
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 #ifdef ID_PIN_USE_EX_EINT
 	irq_set_irq_type(usb_iddig_number, IRQF_TRIGGER_LOW);
 	enable_irq(usb_iddig_number);
@@ -382,14 +380,13 @@ void switch_int_to_host_and_mask(struct musb *musb)
 		DBG(1, "directly return\n");
 		return;
 	}
-<<<<<<< HEAD
-=======
+
 
 	if (!usb_iddig_number) {
 		DBG(0, "OTG not inited, directly return\n");
 		return;
 	}
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 #ifdef ID_PIN_USE_EX_EINT
 	disable_irq(usb_iddig_number);
 	irq_set_irq_type(usb_iddig_number, IRQF_TRIGGER_LOW);
@@ -404,7 +401,7 @@ static void do_host_plug_test_work(struct work_struct *data)
 {
 	static ktime_t ktime_begin, ktime_end;
 	static s64 diff_time;
-<<<<<<< HEAD
+
 
 	disable_irq(usb_iddig_number);
 	host_plug_test_triggered = 1;
@@ -423,7 +420,7 @@ static void do_host_plug_test_work(struct work_struct *data)
 		diff_time = ktime_to_ms(ktime_sub(ktime_end, ktime_begin));
 		if (mtk_musb->is_host && diff_time >= host_plug_in_test_period_ms) {
 			DBG(0, "OFF\n");
-=======
+
 	static int host_on;
 	static struct wake_lock host_test_wakelock;
 	static int wake_lock_inited;
@@ -455,14 +452,14 @@ static void do_host_plug_test_work(struct work_struct *data)
 			host_on = 0;
 			DBG(0, "OFF\n");
 
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 			ktime_begin = ktime_get();
 
 			/* simulate plug out */
 			musb_platform_set_vbus(mtk_musb, 0);
 			udelay(host_test_vbus_off_time_us);
 
-<<<<<<< HEAD
+
 			queue_delayed_work(mtk_musb->st_wq, &mtk_musb->id_pin_work, 0);
 		} else if (!mtk_musb->is_host && diff_time >= host_plug_out_test_period_ms) {
 			DBG(0, "ON\n");
@@ -489,7 +486,7 @@ static void do_host_plug_test_work(struct work_struct *data)
 	msleep(1000);	/* wait auto-trigger ip_pin_work done */
 	DBG(0, "wait auto end\n");
 
-=======
+
 			if (!host_test_vbus_only)
 				schedule_delayed_work(&mtk_musb->id_pin_work, 0);
 		} else if (!host_on && diff_time >= host_plug_out_test_period_ms) {
@@ -510,7 +507,6 @@ static void do_host_plug_test_work(struct work_struct *data)
 	msleep(1000);
 	host_plug_test_triggered = 0;
 	wake_unlock(&host_test_wakelock);
->>>>>>> fb4e5a3... mediatek: usb20: update
 	DBG(0, "END\n");
 }
 

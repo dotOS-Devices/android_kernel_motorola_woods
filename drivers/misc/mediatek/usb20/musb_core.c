@@ -116,8 +116,7 @@
 struct device_node *dts_np;
 #endif
 
-<<<<<<< HEAD
-=======
+
 static void (*usb_hal_disconnect_check_fptr)(void);
 void usb_hal_disconnect_check(void)
 {
@@ -129,7 +128,7 @@ void register_usb_hal_disconnect_check(void (*function)(void))
 	usb_hal_disconnect_check_fptr = function;
 }
 
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 int musb_connect_legacy = 1;
 int musb_is_shutting = 0;
 int musb_fake_disc = 0;
@@ -1319,7 +1318,6 @@ void musb_start(struct musb *musb)
 
 	musb_writeb(regs, MUSB_INTRUSBE, intrusbe);
 
-<<<<<<< HEAD
 	/* In U2 host mode, USB bus will issue Babble INT if it was interfered by
 	  * external signal,ex:drill nosie.we need to keep session on and continue
 	  * to seed SOF,and same time let hw don't care the babble signal
@@ -1332,8 +1330,6 @@ void musb_start(struct musb *musb)
 	DBG(0, "set ignore babble MUSB_ULPI_REG_DATA=%x\n",
 		musb_readb(regs, MUSB_ULPI_REG_DATA));
 
-=======
->>>>>>> fb4e5a3... mediatek: usb20: update
 	if (musb_connect_legacy) {
 		if (musb_speed) {
 			/* put into basic highspeed mode and start session */
@@ -2736,11 +2732,10 @@ static void __exit musb_cleanup(void)
 }
 module_exit(musb_cleanup);
 
-<<<<<<< HEAD
-=======
+
 static int usb_test_wakelock_inited;
 static struct wake_lock usb_test_wakelock;
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 static int option;
 static int set_option(const char *val, const struct kernel_param *kp)
 {
@@ -2761,12 +2756,12 @@ static int set_option(const char *val, const struct kernel_param *kp)
 
 	switch (local_option) {
 	case 0:
-<<<<<<< HEAD
+
 		DBG(0, "case %d\n", local_option);
 		break;
 	case 1:
 		DBG(0, "case %d\n", local_option);
-=======
+
 		DBG(0, "wake_lock usb_test_wakelock\n");
 		if (!usb_test_wakelock_inited) {
 			DBG(0, "%s wake_lock_init\n", __func__);
@@ -2778,7 +2773,6 @@ static int set_option(const char *val, const struct kernel_param *kp)
 	case 1:
 		DBG(0, "wake_unlock usb_test_wakelock\n");
 		wake_unlock(&usb_test_wakelock);
->>>>>>> fb4e5a3... mediatek: usb20: update
 		break;
 	default:
 		break;

@@ -416,12 +416,12 @@ bool mt_usb_is_device(void)
 	return !mtk_musb->is_host;
 }
 
-<<<<<<< HEAD
+
 #define CONN_WORK_DELAY 50
 static struct delayed_work connection_work;
 void do_connection_work(struct work_struct *data)
 {
-=======
+
 static struct delayed_work disconnect_check_work;
 static bool musb_hal_is_vbus_exist(void);
 void do_disconnect_check_work(struct work_struct *data)
@@ -470,7 +470,7 @@ void trigger_disconnect_check_work(void)
 static struct delayed_work connection_work;
 void do_connection_work(struct work_struct *data)
 {
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 	static DEFINE_RATELIMIT_STATE(ratelimit, 1 * HZ, 3);
 	unsigned long flags = 0;
 	bool usb_in = false;
@@ -595,7 +595,7 @@ static CHARGER_TYPE musb_hal_get_charger_type(void)
 static bool musb_hal_is_vbus_exist(void)
 {
 	bool vbus_exist;
-<<<<<<< HEAD
+
 
 #ifdef BYPASS_PMIC_LINKAGE
 	DBG(0, "force on");
@@ -652,7 +652,7 @@ bool usb_cable_connected(void)
 	if (cable_mode == CABLE_MODE_CHRG_ONLY || (cable_mode == CABLE_MODE_HOST_ONLY && chg_type != CHARGING_HOST))
 		connected = false;
 
-=======
+
 
 #ifdef BYPASS_PMIC_LINKAGE
 	DBG(0, "force on");

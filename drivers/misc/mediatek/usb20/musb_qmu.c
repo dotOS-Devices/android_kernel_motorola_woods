@@ -499,11 +499,11 @@ int mtk_kick_CmdQ(struct musb *musb, int isRx, struct musb_qh *qh, struct urb *u
 	}
 
 	if (!mtk_is_qmu_enabled(hw_ep->epnum, isRx)) {
-<<<<<<< HEAD
+
 		DBG(4, "! mtk_is_qmu_enabled\n");
-=======
+
 		DBG(0, "! mtk_is_qmu_enabled<%d,%s>\n", hw_ep->epnum, isRx?"RXQ":"TXQ");
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 
 		musb_ep_select(mbase, hw_ep->epnum);
 		flush_ep_csr(musb, hw_ep->epnum,  isRx);
@@ -525,11 +525,11 @@ int mtk_kick_CmdQ(struct musb *musb, int isRx, struct musb_qh *qh, struct urb *u
 
 			musb_writew(epio, MUSB_RXCSR, MUSB_RXCSR_DMAENAB);
 			/*CC: speed */
-<<<<<<< HEAD
+
 			musb_writeb(epio, MUSB_RXTYPE, qh->type_reg);
-=======
+
 			musb_writeb(epio, MUSB_RXTYPE, (qh->type_reg | usb_pipeendpoint(urb->pipe)));
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 			musb_writeb(epio, MUSB_RXINTERVAL, qh->intv_reg);
 #ifdef CONFIG_USB_MTK_HDRC
 			if (musb->is_multipoint) {
@@ -550,11 +550,11 @@ int mtk_kick_CmdQ(struct musb *musb, int isRx, struct musb_qh *qh, struct urb *u
 			musb_writew(epio, MUSB_TXMAXP, qh->maxpacket);
 			musb_writew(epio, MUSB_TXCSR, MUSB_TXCSR_DMAENAB);
 			/*CC: speed?*/
-<<<<<<< HEAD
+
 			musb_writeb(epio, MUSB_TXTYPE, qh->type_reg);
-=======
+
 			musb_writeb(epio, MUSB_TXTYPE, (qh->type_reg | usb_pipeendpoint(urb->pipe)));
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 			musb_writeb(epio, MUSB_TXINTERVAL, qh->intv_reg);
 #ifdef CONFIG_USB_MTK_HDRC
 			if (musb->is_multipoint) {
@@ -574,11 +574,10 @@ int mtk_kick_CmdQ(struct musb *musb, int isRx, struct musb_qh *qh, struct urb *u
 			musb_writew(musb->mregs, MUSB_INTRTXE, intr_e);
 		}
 
-<<<<<<< HEAD
 		DBG(4, "mtk_qmu_enable\n");
-=======
+
 		DBG(0, "mtk_qmu_enable<%d,%s>\n", hw_ep->epnum, isRx?"RXQ":"TXQ");
->>>>>>> fb4e5a3... mediatek: usb20: update
+
 		mtk_qmu_enable(musb, hw_ep->epnum, isRx);
 	}
 
